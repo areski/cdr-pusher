@@ -2,10 +2,23 @@ package main
 
 import (
 	"fmt"
+	"github.com/kr/pretty"
 	"github.com/tpjg/goriakpbc"
+	"log"
 )
 
 func main() {
+	ip, verr := externalIP()
+	if verr != nil {
+		fmt.Println(verr)
+	}
+	fmt.Println(ip)
+
+	// LoadConfig
+	LoadConfig(Default_conf)
+	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
+	// ----------------------- RIAK ------------------------
+
 	err := riak.ConnectClient("127.0.0.1:8087")
 	if err != nil {
 		fmt.Println("Cannot connect, is Riak running?")
