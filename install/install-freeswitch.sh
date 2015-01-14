@@ -9,6 +9,9 @@
 # cd /usr/src/ ; rm install-freeswitch.sh ; wget --no-check-certificate https://raw.github.com/areski/fs-pusher/master/install/install-freeswitch.sh ; chmod +x install-freeswitch.sh ; ./install-freeswitch.sh
 #
 
+#Install from Deb/Yum Packages or via Sources - (value: SOURCES / PACKAGES)
+INSTALL_TYPE="PACKAGES"
+
 FS_CONF_PATH=https://raw.github.com/areski/fs-pusher/master/install/freeswitch-conf
 FS_INIT_PATH=https://raw.github.com/areski/fs-pusher/master/install/freeswitch-init
 FS_CONFIG_PATH=/etc/freeswitch
@@ -44,24 +47,6 @@ func_install_deps() {
     echo "Setting up Prerequisites and Dependencies for FreeSWITCH"
     case $DIST in
         'DEBIAN')
-            #Get Kernel Arch on Debian if reported as unknown.
-            if [ $KERNELARCH = "unknown" ]; then
-                DEBIANARCH=$(dpkg --print-architecture)
-                if [[ $DEBIANARCH = "amd64" ]]; then
-                    KERNELARCH=x86_64
-                fi
-            else
-                clear
-                echo "we cannot confirm your kernel architecture"
-                echo "enter 32 or 64"
-                read INPUTARCH
-                if [[ $INPUTARCH != "32" ]]; then
-                    KERNELARCH=x86_64
-                else
-                    KERNELARCH=i386
-                fi
-            fi
-
             apt-get -y update
             apt-get -y install locales-all
 
@@ -152,6 +137,12 @@ func_install_fs_sources() {
 
     #Set permissions
     chown -R freeswitch:freeswitch /usr/local/freeswitch /etc/freeswitch
+
+    #Install init.d script / Not need if installed from deb packages
+    func_add_init_script
+
+    #Create alias fs_cli
+    func_create_alias_fs_cli
 }
 
 install_fs_deb_packages() {
@@ -166,6 +157,17 @@ install_fs_deb_packages() {
     apt-get -y install freeswitch-mod-vmd freeswitch-mod-python freeswitch-mod-sndfile freeswitch-sounds-en
     apt-get -y install libfreeswitch-dev freeswitch-mod-lua freeswitch-mod-flite
     apt-get -y install freeswitch-mod-esl freeswitch-mod-event-socket freeswitch-mod-curl
+    apt-get -y install freeswitch-mod-cdr-sqlite freeswitch-mod-v8 freeswitch-mod-xml-cdr
+    apt-get -y install freeswitch-mod-dingaling freeswitch-mod-b64 freeswitch-mod-opus
+
+    #Copy Vanilla config
+    cp -a /usr/share/freeswitch/conf/vanilla /etc/freeswitch
+
+    #Install init.d script
+    cp /etc/init.d/freeswitch /etc/init.d/freeswitch.backup
+    wget --no-check-certificate https://raw.githubusercontent.com/traviscross/freeswitch/master/debian/freeswitch-sysvinit.freeswitch.init  -O /etc/init.d/freeswitch
+    chmod 0755 /etc/init.d/freeswitch
+    cd /etc/init.d; update-rc.d freeswitch defaults 90
 }
 
 func_configure_fs() {
@@ -231,34 +233,27 @@ func_add_init_script() {
     esac
 }
 
-
-case $DIST in
-    'DEBIAN')
-        #Install FreeSWITCH from Debian packages
-        install_fs_deb_packages
-
-        #Install FreeSWITCH from sources
-        #func_install_fs_sources
-
-        #Create alias fs_cli
-        func_create_alias_fs_cli
-        #Install init.d script
-        func_add_init_script
-    ;;
-    'CENTOS')
-        #Install FreeSWITCH from sources
+case $INSTALL_TYPE in
+    'SOURCES')
+        #Install FreeSWITCH from Sources
         func_install_fs_sources
-        #Create alias fs_cli
-        func_create_alias_fs_cli
-        #Install init.d script
-        #*Not need if installed from deb packages
-        func_add_init_script
+    ;;
+    'PACKAGES')
+        case $DIST in
+            'DEBIAN')
+                #Install FreeSWITCH from Debian packages
+                install_fs_deb_packages
+            ;;
+            'CENTOS')
+                #Install FreeSWITCH from sources
+                func_install_fs_sources
+            ;;
+        esac
     ;;
 esac
 
 #Configure FreeSWITCH
 func_configure_fs
-
 
 #Start FreeSWITCH
 /etc/init.d/freeswitch start

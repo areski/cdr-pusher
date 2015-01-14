@@ -2,13 +2,13 @@
 # storage_dest_type: accepted value "postgres" or "riak"
 storage_destination: "postgres"
 
-# Used when storage_dest_type = riak
-# riak_connect: connect string to connect to Riak used by riak.ConnectClient
-riak_connect: "127.0.0.1:8087"
-
 # Used when storage_dest_type = postgres
 # datasourcename: connect string to connect to PostgreSQL used by sql.Open
 pg_datasourcename: "host=localhost dbname=testdb sslmode=disable"
+
+# Used when storage_dest_type = riak
+# riak_connect: connect string to connect to Riak used by riak.ConnectClient
+riak_connect: "127.0.0.1:8087"
 
 # storage_source_type: type to CDRs to push
 storage_source: "sqlite"
