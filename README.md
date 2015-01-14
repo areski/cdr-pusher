@@ -1,7 +1,7 @@
 # FS-Pusher
 
 FS-Pusher is a Go Application aims to run as a service that push CDRs from
-local DB storage (ie: SQLite) to a Riak Cluster.
+local DB storage (ie: SQLite) to a PostGreSQL or Riak Cluster.
 
 [![circleci](https://circleci.com/gh/areski/fs-pusher.png)](https://circleci.com/gh/areski/fs-pusher)
 
@@ -30,8 +30,19 @@ To install and run the fs-pusher application, follow those steps:
 
 Config file `/etc/fs-pusher.yaml`:
 
-    # source_type: type to CDRs to push
-    source_type: "sqlite"
+    # storage_dest_type: accepted value "postgres" or "riak"
+    storage_destination: "postgres"
+
+    # Used when storage_dest_type = postgres
+    # datasourcename: connect string to connect to PostgreSQL used by sql.Open
+    pg_datasourcename: "host=localhost dbname=testdb sslmode=disable"
+
+    # Used when storage_dest_type = riak
+    # riak_connect: connect string to connect to Riak used by riak.ConnectClient
+    riak_connect: "127.0.0.1:8087"
+
+    # storage_source_type: type to CDRs to push
+    storage_source: "sqlite"
 
     # db_file: specify the database path and name
     db_file: "/usr/local/freeswitch/cdr.db"
@@ -44,9 +55,6 @@ Config file `/etc/fs-pusher.yaml`:
 
     # max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
     max_push_batch: 200
-
-    # riak_connect: connect string for riak.ConnectClient
-    riak_connect: "127.0.0.1:8087"
 
     # cdr_fields: list of fields with type to transit - format is "original_field:destination_field:type, ..."
     # ${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}
@@ -110,7 +118,6 @@ FS-pusher is licensed under MIT, see `LICENSE` file.
 - [ ] Deploy with Supervisord
 - [ ] Add test / travis-ci / Badge
 - [ ] godoc / https://gowalker.org
-- [ ] Review install/deploy documentation
-- [ ] Insall script to get and install Go App
-- [ ] Support Ansible
-
+- [ ] Review install / deployment documentation
+- [ ] Install script Go App
+- [ ] Ansible Support
