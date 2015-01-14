@@ -1,7 +1,7 @@
 # FS-Pusher
 
 FS-Pusher is a Go Application aims to run as a service that push CDRs from
-local DB storage (ie: SQLite) to a PostGreSQL or Riak Cluster.
+local DB storage (SQLite Supported) to a PostGreSQL or Riak Cluster.
 
 [![circleci](https://circleci.com/gh/areski/fs-pusher.png)](https://circleci.com/gh/areski/fs-pusher)
 
@@ -105,6 +105,15 @@ Supervisord provides 2 commands, supervisord and supervisorctl:
     supervisorctl stop all: Stop all processes. Notes: start, restart and stop won’t reload the latest configs.
     supervisorctl reload: Reload the latest configs.
     supervisorctl update: Reload all the processes whoes config changed.
+
+## Configure FreeSWITCH
+
+A shell script is provided to install FreeSWITCH on Debian 7.x: https://github.com/areski/fs-pusher/blob/master/install/install-freeswitch.sh
+
+FreeSWITCH mod_cdr_sqlite is used to store locally the CDRs prior being fetch and send by fs_pusher: https://wiki.freeswitch.org/wiki/Mod_cdr_sqlite
+
+Some customization can be achieved by editing the config file `fs-pusher.yaml` and the config file for Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to send specific fields in your CDRs, you will need to change both conf files to ensure that the data is stored in SQLite and that Fs-pusher fetch and send this new data.
+
 
 ## License
 

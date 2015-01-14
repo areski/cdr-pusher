@@ -177,6 +177,7 @@ func_configure_fs() {
     sed -i -r \
     -e "s/<\!--\s?<load module=\"mod_lua\"\/>\s?-->/<load module=\"mod_lua\"\/>/g" \
     -e "s/<\!--\s?<load module=\"mod_xml_cdr\"\/>\s?-->/<load module=\"mod_xml_cdr\"\/>/g" \
+    -e "s/<\!--\s?<load module=\"mod_cdr_sqlite\"\/>\s?-->/<load module=\"mod_cdr_sqlite\"\/>/g" \
     -e "s/<\!--\s?<load module=\"mod_dingaling\"\/>\s?-->/<load module=\"mod_dingaling\"\/>/g" \
     -e "s/<\!--\s?<load module=\"mod_shell_stream\"\/>\s?-->/<load module=\"mod_shell_stream\"\/>/g" \
     -e "s/<\!-- \s?<load module=\"mod_shell_stream\"\/>\s? -->/<load module=\"mod_shell_stream\"\/>/g" \
@@ -197,14 +198,6 @@ func_configure_fs() {
     #wget --no-check-certificate $FS_CONF_PATH/xml_cdr.conf.xml -O xml_cdr.conf.xml
     #create dir to store send error of CDR
     #mkdir /usr/local/freeswitch/log/err_xml_cdr/
-
-    echo ""
-    echo "Add cdr_sqlite to /etc/freeswitch/autoload_configs/modules.conf.xml"
-    chk=`grep "mod_cdr_sqlite" /etc/freeswitch/autoload_configs/modules.conf.xml|wc -l`
-    if [ $chk -lt 1 ] ; then
-        echo "Set mod_cdr_sqlite"
-        sed -i "s/  <\/modules>/\n    <load module=\"mod_cdr_sqlite\"\/>\n\n  <\/modules>/g" /etc/freeswitch/autoload_configs/modules.conf.xml
-    fi
 }
 
 func_create_alias_fs_cli() {

@@ -10,6 +10,8 @@ package main
 //     (id int, call_uuid text, dst text, callerid_name text, callerid_num text, duration int,
 //      data jsonb, created timestamp );
 //
+// INSERT INTO cdr VALUES ("Outbound Call","123555555","123555555","default","2015-01-14 17:58:01","2015-01-14 17:58:01","2015-01-14 17:58:06",5,5,"NORMAL_CLEARING","2bbe83f7-5111-4b5b-9626-c5154608d4ee","","")
+//
 
 import (
 	"database/sql"
