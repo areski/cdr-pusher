@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func main() {
+func second_main() {
 	ip, verr := externalIP()
 	if verr != nil {
 		fmt.Println(verr)
