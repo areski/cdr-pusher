@@ -30,7 +30,25 @@ max_push_batch: 200
 # cdr_fields: list of fields with type to transit - format is "original_field:destination_field:type, ..."
 # ${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}
 
-cdr_fields: "caller_id_name:caller_id_name:string,caller_id_number:caller_id_number:string,destination_number:destination_number:string,context:context:string,start_stamp:start_stamp:date,answer_stamp:answer_stamp:date,end_stamp:end_stamp:date,duration:duration:integer,billsec:billsec:integer,hangup_cause:hangup_cause:integer,uuid:uuid:string,bleg_uuid:bleg_uuid:string,accountcode:accountcode:string"
+# cdr_fields: "caller_id_name:caller_id_name:string,caller_id_number:caller_id_number:string,destination_number:destination_number:string,context:context:string,start_stamp:start_stamp:date,answer_stamp:answer_stamp:date,end_stamp:end_stamp:date,duration:duration:integer,billsec:billsec:integer,hangup_cause:hangup_cause:integer,uuid:uuid:string,bleg_uuid:bleg_uuid:string,accountcode:accountcode:string"
+
+cdr_fields:
+    - orig_field: caller_id_name
+      dest_field: caller_id_name
+      type_field: string
+    - orig_field: caller_id_number
+      dest_field: caller_id_number
+      type_field: string
+    - orig_field: duration
+      dest_field: duration
+      type_field: int
+    - orig_field: end_stamp
+      dest_field: extra
+      type_field: jsonb
+    - orig_field: answer_stamp
+      dest_field: extra
+      type_field: jsonb
+
 
 # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
 switch_ip: ""

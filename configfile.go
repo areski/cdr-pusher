@@ -51,6 +51,12 @@ var Default_conf = "./fs-pusher.yaml"
 var Prod_conf = "/etc/fs-pusher.yaml"
 
 // Config held the structure for the configuration file
+type ParseFields struct {
+	Orig_field string
+	Dest_field string
+	Type_field string
+}
+
 type Config struct {
 	// First letter of variables need to be capital letter
 	Storage_destination string
@@ -61,8 +67,9 @@ type Config struct {
 	Db_table            string
 	Heartbeat           int
 	Max_push_batch      int
-	Cdr_fields          string
-	Switch_ip           string
+	// Cdr_fields          string
+	Cdr_fields []ParseFields
+	Switch_ip  string
 }
 
 var config = Config{}

@@ -16,43 +16,17 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	// "github.com/astaxie/beego/orm"
+	"github.com/kr/pretty"
 	// "github.com/coopernurse/gorp"
+	"bytes"
 	"github.com/jinzhu/gorm"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"text/template"
 	"time"
 )
-
-// type Fetchfield struct {
-// 	fieldtype  string
-// 	fieldvalue string
-// 	fieldname  string
-// }
-
-// type Fetchrow struct {
-// 	row map[int]Fetchfield
-// }
-
-// type Fetcher struct {
-// 	db_file        string
-// 	db_table       string
-// 	max_push_batch int
-// 	num_fetched    int
-// 	cdr_fields     string
-// 	list_fetched   map[int]Fetchrow
-// }
-
-// func playrow() {
-// 	m := make(map[int]Fetchrow)
-// 	t := make(map[int]Fetchfield)
-// 	t[0] = Fetchfield{fieldtype: "fieldtype1"}
-// 	m[0] = Fetchrow{row: t}
-// 	val := Fetcher{db_file: "coco", list_fetched: m}
-// 	fmt.Println(val)
-// }
 
 type CdrGorm struct {
 	Rowid            int64
@@ -118,15 +92,16 @@ type Fetcher struct {
 	db             *sql.DB
 	db_file        string
 	db_table       string
+	sql_query      string
 	max_push_batch int
 	num_fetched    int
-	cdr_fields     string
+	cdr_fields     []ParseFields
 	results        map[int][]string
 }
 
-func NewFetcher(db_file string, db_table string, max_push_batch int, cdr_fields string) *Fetcher {
+func NewFetcher(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) *Fetcher {
 	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
-	return &Fetcher{db, db_file, db_table, max_push_batch, 0, cdr_fields, nil}
+	return &Fetcher{db, db_file, db_table, "", max_push_batch, 0, cdr_fields, nil}
 }
 
 func (f *Fetcher) Connect() error {
@@ -139,8 +114,35 @@ func (f *Fetcher) Connect() error {
 	return nil
 }
 
+type Sqlbuilder struct {
+	List_fields string
+	Table       string
+	Limit       string
+	Clause      string
+	Order       string
+}
+
 func (f *Fetcher) ParseCdrFields() error {
+	for i, l := range f.cdr_fields {
+		fmt.Println(i, l.Dest_field)
+	}
 	// parse the string cdr_fields
+	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Limit}} {{.Clause}} {{.Order}}"
+	var res_sql bytes.Buffer
+
+	slimit := fmt.Sprintf("LIMIT %d", f.max_push_batch)
+	sqlb := Sqlbuilder{List_fields: "rowid, caller_id_name, destination_number", Table: "cdr", Limit: slimit}
+	t := template.Must(template.New("sql").Parse(tsql))
+
+	err := t.Execute(&res_sql, sqlb)
+	if err != nil {
+		panic(err)
+	}
+	f.sql_query = res_sql.String()
+	fmt.Println("RES_SQL: ", f.sql_query)
+
+	// f.sql_query = "SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100"
+	// fmt.Println("QUERY: ", f.sql_query)
 	return nil
 }
 
@@ -150,8 +152,8 @@ func (f *Fetcher) DBClose() error {
 }
 
 func (f *Fetcher) ScanResult() error {
-	fmt.Println("QUERY: SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
-	rows, err := f.db.Query("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
+	f.ParseCdrFields()
+	rows, err := f.db.Query(f.sql_query)
 	defer rows.Close()
 	if err != nil {
 		fmt.Println("Failed to run query", err)
@@ -192,9 +194,8 @@ func (f *Fetcher) ScanResult() error {
 	return nil
 }
 
-func fetch_cdr_sqlite_raw() {
-	cdr_fields := ""
-	f := NewFetcher("./sqlitedb/cdr.db", "cdr", 200, cdr_fields)
+func fetch_cdr_sqlite_raw(config Config) {
+	f := NewFetcher(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
 	err := f.Connect()
 	if err != nil {
 		log.Fatal(err)
@@ -202,6 +203,7 @@ func fetch_cdr_sqlite_raw() {
 	defer f.db.Close()
 	f.ScanResult()
 	fmt.Printf("\n==========\n=> %#v\n", f.results)
+	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config.Db_file))
 }
 
 func push_cdr_pg() {
@@ -210,8 +212,19 @@ func push_cdr_pg() {
 }
 
 func main() {
+	ip, verr := externalIP()
+	if verr != nil {
+		fmt.Println(verr)
+	}
+	fmt.Println(ip)
+
+	// LoadConfig
+	LoadConfig(Default_conf)
+	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
+	// ----------------------- RIAK ------------------------
+
 	// Fetch CDRs
-	fetch_cdr_sqlite_raw()
+	fetch_cdr_sqlite_raw(config)
 
 	// create the statement string
 	var sStmt string = "INSERT INTO test (id, call_uuid, dst, callerid_name, callerid_num, duration, data, created) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
