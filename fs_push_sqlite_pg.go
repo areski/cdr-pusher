@@ -77,17 +77,6 @@ func (c CdrGorm) TableName() string {
 	return "cdr"
 }
 
-type Fetcher struct {
-	db             sql.DB
-	db_file        string
-	db_table       string
-	max_push_batch int
-	num_fetched    int
-	cdr_fields     string
-	list_fetched   [][]string
-	// list_fetched   map[int]Fetchrow
-}
-
 func fetch_cdr_sqlite_sqlx() {
 	db, err := sqlx.Open("sqlite3", "./sqlitedb/cdr.db")
 	defer db.Close()
@@ -125,31 +114,56 @@ func fetch_cdr_sqlite_gorm() {
 	fmt.Println("-------------------------------")
 }
 
-func fetch_cdr_sqlite_raw() {
-	db, err := sql.Open("sqlite3", "./sqlitedb/cdr.db")
-	defer db.Close()
+type Fetcher struct {
+	db             *sql.DB
+	db_file        string
+	db_table       string
+	max_push_batch int
+	num_fetched    int
+	cdr_fields     string
+	results        map[int][]string
+}
 
+func NewFetcher(db_file string, db_table string, max_push_batch int, cdr_fields string) *Fetcher {
+	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
+	return &Fetcher{db, db_file, db_table, max_push_batch, 0, cdr_fields, nil}
+}
+
+func (f *Fetcher) Connect() error {
+	var err error
+	f.db, err = sql.Open("sqlite3", "./sqlitedb/cdr.db")
 	if err != nil {
 		fmt.Println("Failed to connect", err)
-		return
+		return err
 	}
-	fmt.Println("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
-	rows, err := db.Query("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
+	return nil
+}
+
+func (f *Fetcher) ParseCdrFields() error {
+	// parse the string cdr_fields
+	return nil
+}
+
+func (f *Fetcher) DBClose() error {
+	defer f.db.Close()
+	return nil
+}
+
+func (f *Fetcher) ScanResult() error {
+	fmt.Println("QUERY: SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
+	rows, err := f.db.Query("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
 	defer rows.Close()
 	if err != nil {
 		fmt.Println("Failed to run query", err)
-		return
+		return err
 	}
-
 	cols, err := rows.Columns()
 	if err != nil {
 		fmt.Println("Failed to get columns", err)
-		return
+		return err
 	}
-
 	// Result is your slice string.
-	results := make(map[int][]string)
-	// var results [][]string
+	f.results = make(map[int][]string)
 	rawResult := make([][]byte, len(cols))
 	result := make([]string, len(cols))
 
@@ -162,7 +176,7 @@ func fetch_cdr_sqlite_raw() {
 		err = rows.Scan(dest...)
 		if err != nil {
 			fmt.Println("Failed to scan row", err)
-			return
+			return err
 		}
 		for i, raw := range rawResult {
 			if raw == nil {
@@ -170,12 +184,24 @@ func fetch_cdr_sqlite_raw() {
 			} else {
 				result[i] = string(raw)
 			}
-			fmt.Println(result[i])
-			results[k] = append(results[k], result[i])
+			f.results[k] = append(f.results[k], result[i])
 		}
 		k++
 	}
-	fmt.Printf("\n\n ----------------------\n=> %#v\n", results[1])
+	// fmt.Printf("\n\n ----------------------\n=> %#v\n", f.results)
+	return nil
+}
+
+func fetch_cdr_sqlite_raw() {
+	cdr_fields := ""
+	f := NewFetcher("./sqlitedb/cdr.db", "cdr", 200, cdr_fields)
+	err := f.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.db.Close()
+	f.ScanResult()
+	fmt.Printf("\n==========\n=> %#v\n", f.results)
 }
 
 func push_cdr_pg() {
