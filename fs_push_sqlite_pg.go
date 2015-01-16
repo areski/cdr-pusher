@@ -16,76 +16,166 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/astaxie/beego/orm"
+	// "github.com/astaxie/beego/orm"
+	// "github.com/coopernurse/gorp"
+	"github.com/jinzhu/gorm"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"time"
 )
 
-type Fetchfield struct {
-	fieldtype  string
-	fieldvalue string
-	fieldname  string
+// type Fetchfield struct {
+// 	fieldtype  string
+// 	fieldvalue string
+// 	fieldname  string
+// }
+
+// type Fetchrow struct {
+// 	row map[int]Fetchfield
+// }
+
+// type Fetcher struct {
+// 	db_file        string
+// 	db_table       string
+// 	max_push_batch int
+// 	num_fetched    int
+// 	cdr_fields     string
+// 	list_fetched   map[int]Fetchrow
+// }
+
+// func playrow() {
+// 	m := make(map[int]Fetchrow)
+// 	t := make(map[int]Fetchfield)
+// 	t[0] = Fetchfield{fieldtype: "fieldtype1"}
+// 	m[0] = Fetchrow{row: t}
+// 	val := Fetcher{db_file: "coco", list_fetched: m}
+// 	fmt.Println(val)
+// }
+
+type CdrGorm struct {
+	Rowid            int64
+	Caller_id_name   string
+	Caller_id_number string
+	Duration         int64
+	Start_stamp      time.Time
+	// destination_number string
+	// context            string
+	// start_stamp        time.Time
+	// answer_stamp       time.Time
+	// end_stamp          time.Time
+	// duration           int64
+	// billsec            int64
+	// hangup_cause       string
+	// uuid               string
+	// bleg_uuid          string
+	// account_code       string
 }
 
-type Fetchrow struct {
-	row map[int]Fetchfield
+func (c CdrGorm) TableName() string {
+	return "cdr"
 }
 
 type Fetcher struct {
+	db             sql.DB
 	db_file        string
 	db_table       string
 	max_push_batch int
 	num_fetched    int
 	cdr_fields     string
-	list_fetched   map[int]Fetchrow
+	list_fetched   [][]string
+	// list_fetched   map[int]Fetchrow
 }
 
-func playrow() {
-	m := make(map[int]Fetchrow)
-	t := make(map[int]Fetchfield)
-	t[0] = Fetchfield{fieldtype: "fieldtype1"}
-	m[0] = Fetchrow{row: t}
-	val := Fetcher{db_file: "coco", list_fetched: m}
-	fmt.Println(val)
+func fetch_cdr_sqlite_sqlx() {
+	db, err := sqlx.Open("sqlite3", "./sqlitedb/cdr.db")
+	defer db.Close()
+
+	if err != nil {
+		fmt.Println("Failed to connect", err)
+		return
+	}
+	fmt.Println("SQLX:> SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
+	// cdrs := make([][]interface{}, 100)
+	var cdrs []interface{}
+	err = db.Select(&cdrs, "SELECT rowid, caller_id_name, duration FROM cdr LIMIT 100")
+	if err != nil {
+		fmt.Println("Failed to run query", err)
+		return
+	}
+
+	fmt.Println(cdrs)
+	fmt.Println("-------------------------------")
 }
 
-type CdrSqliteDB struct {
-	// Id int `orm:"auto"`
-	caller_id_name     string
-	caller_id_number   string
-	destination_number string
-	context            string
-	start_stamp        string
-	answer_stamp       string
-	end_stamp          string
-	duration           int
-	billsec            int
-	hangup_cause       string
-	uuid               string
-	bleg_uuid          string
-	account_code       string
+func fetch_cdr_sqlite_gorm() {
+	db, err := gorm.Open("sqlite3", "./sqlitedb/cdr.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// var cdrs []CdrGorm
+	var cdrs []map[string]interface{}
+
+	db.Raw("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT ?", 10).Scan(cdrs)
+
+	// db.Limit(10).Find(&cdrs)
+	// fmt.Printf("%s - %v\n", query, cdrs)
+	fmt.Println(cdrs)
+	fmt.Println("-------------------------------")
 }
 
-func init() {
-	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
-	orm.RegisterDataBase("default", "sqlite3", "./sqlitedb/cdr.db")
-	// orm.RegisterDataBase("default", "mysql", "root:root@/my_db?charset=utf8", 30)
-	orm.RegisterModel(new(CdrSqliteDB))
-}
+func fetch_cdr_sqlite_raw() {
+	db, err := sql.Open("sqlite3", "./sqlitedb/cdr.db")
+	defer db.Close()
 
-func fetch_cdr_sqlite() {
-	orm.Debug = true
-	// fetch CDRs from SQLite
-	o := orm.NewOrm()
-	// insert
-	// id, err := o.Insert(&user)
-	var cdrs []*CdrSqliteDB
-	qs := o.QueryTable("cdr")
-	// num, err := qs.Filter("imported", 0).All(&cdrs)
-	num, err := qs.All(&cdrs)
-	fmt.Println(num, err)
+	if err != nil {
+		fmt.Println("Failed to connect", err)
+		return
+	}
+	fmt.Println("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
+	rows, err := db.Query("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100")
+	defer rows.Close()
+	if err != nil {
+		fmt.Println("Failed to run query", err)
+		return
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		fmt.Println("Failed to get columns", err)
+		return
+	}
+
+	// Result is your slice string.
+	results := make(map[int][]string)
+	// var results [][]string
+	rawResult := make([][]byte, len(cols))
+	result := make([]string, len(cols))
+
+	dest := make([]interface{}, len(cols)) // A temporary interface{} slice
+	for i, _ := range rawResult {
+		dest[i] = &rawResult[i] // Put pointers to each string in the interface slice
+	}
+	k := 0
+	for rows.Next() {
+		err = rows.Scan(dest...)
+		if err != nil {
+			fmt.Println("Failed to scan row", err)
+			return
+		}
+		for i, raw := range rawResult {
+			if raw == nil {
+				result[i] = "\\N"
+			} else {
+				result[i] = string(raw)
+			}
+			fmt.Println(result[i])
+			results[k] = append(results[k], result[i])
+		}
+		k++
+	}
+	fmt.Printf("\n\n ----------------------\n=> %#v\n", results[1])
 }
 
 func push_cdr_pg() {
@@ -95,7 +185,7 @@ func push_cdr_pg() {
 
 func main() {
 	// Fetch CDRs
-	fetch_cdr_sqlite()
+	fetch_cdr_sqlite_raw()
 
 	// create the statement string
 	var sStmt string = "INSERT INTO test (id, call_uuid, dst, callerid_name, callerid_num, duration, data, created) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
