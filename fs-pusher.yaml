@@ -14,7 +14,8 @@ riak_connect: "127.0.0.1:8087"
 storage_source: "sqlite"
 
 # db_file: specify the database path and name
-db_file: "/usr/local/freeswitch/cdr.db"
+# db_file: "/usr/local/freeswitch/cdr.db"
+db_file: "./sqlitedb/cdr.db"
 
 # db_table: the DB table name
 db_table: "cdr"
@@ -39,13 +40,17 @@ cdr_fields:
     - orig_field: caller_id_number
       dest_field: caller_id_number
       type_field: string
+    - orig_field: destination_number
+      dest_field: destination_number
+      type_field: string
     - orig_field: duration
       dest_field: duration
       type_field: int
-    - orig_field: end_stamp
+    - orig_field: "datetime(end_stamp)"
       dest_field: extra
       type_field: jsonb
-    - orig_field: answer_stamp
+    # - orig_field: "strftime('%s', answer_stamp)" # convert to epoch
+    - orig_field: "datetime(answer_stamp)"
       dest_field: extra
       type_field: jsonb
 

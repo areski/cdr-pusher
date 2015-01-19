@@ -122,16 +122,30 @@ type Sqlbuilder struct {
 	Order       string
 }
 
-func (f *Fetcher) ParseCdrFields() error {
-	for i, l := range f.cdr_fields {
+// type ParseFields struct {
+//     Orig_field string
+//     Dest_field string
+//     Type_field string
+// }
+
+func create_field_string(cdr_fields []ParseFields) string {
+	str_fields := "rowid"
+	for i, l := range cdr_fields {
 		fmt.Println(i, l.Dest_field)
+		str_fields = str_fields + ", " + l.Orig_field
 	}
+	fmt.Println(str_fields)
+	return str_fields
+}
+
+func (f *Fetcher) ParseCdrFields() error {
+	str_fields := create_field_string(f.cdr_fields)
 	// parse the string cdr_fields
 	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Limit}} {{.Clause}} {{.Order}}"
 	var res_sql bytes.Buffer
 
 	slimit := fmt.Sprintf("LIMIT %d", f.max_push_batch)
-	sqlb := Sqlbuilder{List_fields: "rowid, caller_id_name, destination_number", Table: "cdr", Limit: slimit}
+	sqlb := Sqlbuilder{List_fields: str_fields, Table: "cdr", Limit: slimit}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&res_sql, sqlb)
@@ -140,9 +154,6 @@ func (f *Fetcher) ParseCdrFields() error {
 	}
 	f.sql_query = res_sql.String()
 	fmt.Println("RES_SQL: ", f.sql_query)
-
-	// f.sql_query = "SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT 100"
-	// fmt.Println("QUERY: ", f.sql_query)
 	return nil
 }
 
@@ -190,7 +201,6 @@ func (f *Fetcher) ScanResult() error {
 		}
 		k++
 	}
-	// fmt.Printf("\n\n ----------------------\n=> %#v\n", f.results)
 	return nil
 }
 
@@ -201,9 +211,12 @@ func fetch_cdr_sqlite_raw(config Config) {
 		log.Fatal(err)
 	}
 	defer f.db.Close()
-	f.ScanResult()
+	err = f.ScanResult()
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("\n==========\n=> %#v\n", f.results)
-	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config.Db_file))
+	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config.Db_file))
 }
 
 func push_cdr_pg() {
