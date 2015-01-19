@@ -38,3 +38,27 @@ func fetch_cdr_sqlite_gorm() {
     fmt.Println(cdrs)
     fmt.Println("-------------------------------")
 }
+
+
+type CdrGorm struct {
+    Rowid            int64
+    Caller_id_name   string
+    Caller_id_number string
+    Duration         int64
+    Start_stamp      time.Time
+    // destination_number string
+    // context            string
+    // start_stamp        time.Time
+    // answer_stamp       time.Time
+    // end_stamp          time.Time
+    // duration           int64
+    // billsec            int64
+    // hangup_cause       string
+    // uuid               string
+    // bleg_uuid          string
+    // account_code       string
+}
+
+func (c CdrGorm) TableName() string {
+    return "cdr"
+}

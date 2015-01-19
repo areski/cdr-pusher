@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	// "github.com/coopernurse/gorp"
-	"log"
 	"text/template"
 )
 
@@ -15,14 +13,14 @@ type Fetcher struct {
 	db             *sql.DB
 	db_file        string
 	db_table       string
-	sql_query      string
 	max_push_batch int
 	num_fetched    int
 	cdr_fields     []ParseFields
 	results        map[int][]string
+	sql_query      string
 }
 
-type Sqlbuilder struct {
+type FetchSQL struct {
 	List_fields string
 	Table       string
 	Limit       string
@@ -30,10 +28,21 @@ type Sqlbuilder struct {
 	Order       string
 }
 
-func NewFetcher(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) *Fetcher {
-	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
-	return &Fetcher{db, db_file, db_table, "", max_push_batch, 0, cdr_fields, nil}
+func (f *Fetcher) Init(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) {
+	f.db = nil
+	f.db_file = db_file
+	f.db_table = db_table
+	f.max_push_batch = max_push_batch
+	f.num_fetched = 0
+	f.cdr_fields = cdr_fields
+	f.results = nil
+	f.sql_query = ""
 }
+
+// func NewFetcher(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) *Fetcher {
+// 	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
+// 	return &Fetcher{db: db, db_file: db_file, db_table: db_table, sql_query: "", max_push_batch, 0, cdr_fields, nil}
+// }
 
 func (f *Fetcher) Connect() error {
 	var err error
@@ -45,32 +54,22 @@ func (f *Fetcher) Connect() error {
 	return nil
 }
 
-func create_field_string(cdr_fields []ParseFields) string {
-	str_fields := "rowid"
-	for i, l := range cdr_fields {
-		fmt.Println(i, l.Dest_field)
-		str_fields = str_fields + ", " + l.Orig_field
-	}
-	fmt.Println(str_fields)
-	return str_fields
-}
-
-func (f *Fetcher) ParseCdrFields() error {
-	str_fields := create_field_string(f.cdr_fields)
+func (f *Fetcher) PrepareQuery() error {
+	str_fields := get_fields_select(f.cdr_fields)
 	// parse the string cdr_fields
 	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Limit}} {{.Clause}} {{.Order}}"
-	var res_sql bytes.Buffer
+	var str_sql bytes.Buffer
 
 	slimit := fmt.Sprintf("LIMIT %d", f.max_push_batch)
-	sqlb := Sqlbuilder{List_fields: str_fields, Table: "cdr", Limit: slimit}
+	sqlb := FetchSQL{List_fields: str_fields, Table: "cdr", Limit: slimit}
 	t := template.Must(template.New("sql").Parse(tsql))
 
-	err := t.Execute(&res_sql, sqlb)
+	err := t.Execute(&str_sql, sqlb)
 	if err != nil {
 		panic(err)
 	}
-	f.sql_query = res_sql.String()
-	fmt.Println("RES_SQL: ", f.sql_query)
+	f.sql_query = str_sql.String()
+	fmt.Println("SELECT_SQL: ", f.sql_query)
 	return nil
 }
 
@@ -80,7 +79,6 @@ func (f *Fetcher) DBClose() error {
 }
 
 func (f *Fetcher) ScanResult() error {
-	f.ParseCdrFields()
 	rows, err := f.db.Query(f.sql_query)
 	defer rows.Close()
 	if err != nil {
@@ -121,16 +119,23 @@ func (f *Fetcher) ScanResult() error {
 	return nil
 }
 
-func fetch_cdr_sqlite_raw(config Config) {
-	f := NewFetcher(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
+func (f *Fetcher) Fetch() error {
+	// Connect to DB
 	err := f.Connect()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer f.db.Close()
+	// Prepare SQL query
+	err = f.PrepareQuery()
+	if err != nil {
+		return err
+	}
+	// Get Results
 	err = f.ScanResult()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	fmt.Printf("\n%#v\n", f.results)
+	fmt.Printf("RESULT:\n%#v\n", f.results)
+	return nil
 }

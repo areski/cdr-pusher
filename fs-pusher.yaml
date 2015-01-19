@@ -6,6 +6,11 @@ storage_destination: "postgres"
 # datasourcename: connect string to connect to PostgreSQL used by sql.Open
 pg_datasourcename: "host=localhost dbname=testdb sslmode=disable"
 
+# Used when storage_dest_type = postgres
+# pg_store_table: the DB table name to store CDRs in Postgres
+#TODO: Not implemented (hardcoded at the moment)
+pg_store_table: "imported_cdr"
+
 # Used when storage_dest_type = riak
 # riak_connect: connect string to connect to Riak used by riak.ConnectClient
 riak_connect: "127.0.0.1:8087"
@@ -18,6 +23,7 @@ storage_source: "sqlite"
 db_file: "./sqlitedb/cdr.db"
 
 # db_table: the DB table name
+#TODO: Not implemented (hardcoded at the moment)
 db_table: "cdr"
 
 # heartbeat: Frequence of check for new CDRs in seconds

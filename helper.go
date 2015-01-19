@@ -42,3 +42,27 @@ func externalIP() (string, error) {
 	}
 	return "", errors.New("are you connected to the network?")
 }
+
+func get_fields_select(cdr_fields []ParseFields) string {
+	// sqlite init to rowid - move this to conf based on fetcher backend
+	str_fields := "rowid"
+	for _, l := range cdr_fields {
+		if str_fields != "" {
+			str_fields = str_fields + ", "
+		}
+		str_fields = str_fields + l.Orig_field
+	}
+	return str_fields
+}
+
+func get_fields_insert(cdr_fields []ParseFields) string {
+	str_fields := ""
+	for _, l := range cdr_fields {
+		if str_fields != "" {
+			str_fields = str_fields + ", "
+		}
+		// TODO: Handle duplicate Dest_field, ie "extra"|jsonb
+		str_fields = str_fields + l.Dest_field
+	}
+	return str_fields
+}
