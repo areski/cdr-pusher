@@ -30,8 +30,9 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
+	"strconv"
 	"text/template"
-	"time"
+	// "time"
 )
 
 var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS cdr_import
@@ -89,28 +90,30 @@ func (p *Pusher) Connect() error {
 	return nil
 }
 
-
-
 func (p *Pusher) buildInsertQuery(fetched_results map[int][]string) error {
-	str_fields := get_fields_insert(p.cdr_fields)
-    list_field := make(map[string]int)
-    i := 0
-    values := ""
-    for _, v := range p.cdr_fields {
-        i = i + 1
-        if list_field[v.Dest_field] == nil {
-            list_field[v.Dest_field] = ""
-            values = values + string(i) + "$,"
-        }
-    }
+	str_fields, extra := get_fields_insert(p.cdr_fields)
+	if extra == true {
+		println("handle extra fields...")
+	}
+	list_field := make(map[string]int)
+	i := 0
+	values := ""
+	for _, v := range p.cdr_fields {
+		i = i + 1
+		if list_field[v.Dest_field] == 0 {
+			list_field[v.Dest_field] = 1
+			values = values + "$" + strconv.Itoa(i) + ", "
+		}
+	}
+	println(values)
+	// Remove last coma
+	valuesFmt := values[0 : len(values)-2]
+	println(valuesFmt)
 	// parse the string cdr_fields
 	const tsql = "INSERT INTO {{.Table}} ({{.List_fields}}) VALUES ({{.Values}})"
 	var str_sql bytes.Buffer
 
-	// TODO: loop on fetched_results and inject in Values
-
-	values := ""
-	sqlb := PushSQL{Table: "imported_cdr", List_fields: str_fields, Values: values}
+	sqlb := PushSQL{Table: "imported_cdr", List_fields: str_fields, Values: valuesFmt}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&str_sql, sqlb)
@@ -129,27 +132,56 @@ func (p *Pusher) DBClose() error {
 
 func (p *Pusher) BatchInsert() error {
 	// create the statement string
-	var sStmt string = `INSERT INTO cdr_import (id, call_uuid, dst, callerid_name, callerid_num, duration, data, created) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	// var sql_query string = `INSERT INTO cdr_import (id, call_uuid, dst, callerid_name, callerid_num, duration, data, created) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
-	stmt, err := p.db.Prepare(sStmt)
-	defer stmt.Close()
+	insertStmt, err := p.db.Prepare(p.sql_query)
+	defer insertStmt.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	res, err := stmt.Exec(...)
-	if err != nil || res == nil {
-		log.Fatal(err)
-	}
-	lastId, err := res.LastInsertId()
+	tx, err := p.db.Begin()
 	if err != nil {
+		panic(err)
+	}
+
+	// Batch Insert
+	data := []map[string]string{
+		{"field1": "1", "field2": "1"},
+		{"field1": "2", "field2": "2"},
+		{"field1": "3", "field2": "3"},
+	}
+	var res sql.Result
+	for _, v := range data {
+		println("row:", v["field1"], v["field2"])
+		res, err = tx.Stmt(insertStmt).Exec(v["field1"], v["field2"])
+		if err != nil {
+			println("Exec err:", err.Error())
+		} else {
+			id, err := res.LastInsertId()
+			if err != nil {
+				println("LastInsertId:", id)
+			} else {
+				println("Error:", err.Error())
+			}
+			num, err := res.RowsAffected()
+			println("RowsAffected:", num)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		log.Fatal(err)
 	}
-	rowCnt, err := res.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("ID = %d, affected = %d\n", lastId, rowCnt)
+
+	// lastId, err := res.LastInsertId()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// rowCnt, err := res.RowsAffected()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// log.Printf("ID = %d, affected = %d\n", lastId, rowCnt)
 	return nil
 }
 

@@ -55,14 +55,18 @@ func get_fields_select(cdr_fields []ParseFields) string {
 	return str_fields
 }
 
-func get_fields_insert(cdr_fields []ParseFields) string {
+func get_fields_insert(cdr_fields []ParseFields) (string, bool) {
+	extra := false
 	str_fields := ""
 	for _, l := range cdr_fields {
+		if l.Dest_field == "extra" {
+			extra = true
+			continue
+		}
 		if str_fields != "" {
 			str_fields = str_fields + ", "
 		}
-		// TODO: Handle duplicate Dest_field, ie "extra"|jsonb
 		str_fields = str_fields + l.Dest_field
 	}
-	return str_fields
+	return str_fields, extra
 }
