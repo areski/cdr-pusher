@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net"
+	"strconv"
 )
 
 // https://code.google.com/p/whispering-gophers/source/browse/util/helper.go
@@ -55,7 +56,7 @@ func get_fields_select(cdr_fields []ParseFields) string {
 	return str_fields
 }
 
-func get_fields_insert(cdr_fields []ParseFields) (string, bool) {
+func build_fieldlist_insert(cdr_fields []ParseFields) (string, bool) {
 	extra := false
 	str_fields := ""
 	for _, l := range cdr_fields {
@@ -68,5 +69,26 @@ func get_fields_insert(cdr_fields []ParseFields) (string, bool) {
 		}
 		str_fields = str_fields + l.Dest_field
 	}
+	// Add 1 extra at the end
+	if extra == true {
+		str_fields = str_fields + ", extra"
+	}
 	return str_fields, extra
+}
+
+func build_valuelist_insert(cdr_fields []ParseFields) string {
+	list_field := make(map[string]int)
+	i := 0
+	values := ""
+	for _, v := range cdr_fields {
+		i = i + 1
+		if list_field[v.Dest_field] == 0 {
+			list_field[v.Dest_field] = 1
+			values = values + "$" + strconv.Itoa(i) + ", "
+		}
+	}
+	// Remove last coma
+	valuesFmt := values[0 : len(values)-2]
+	println(valuesFmt)
+	return valuesFmt
 }

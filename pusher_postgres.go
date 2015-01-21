@@ -30,14 +30,38 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	"strconv"
 	"text/template"
 	// "time"
 )
 
-var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS cdr_import
-        (id int, call_uuid text, dst text, callerid_name text, callerid_num text, duration int,
-         data jsonb, created timestamp)`
+var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS cdr_import (
+        id serial NOT NULL PRIMARY KEY,
+        switch character varying(80) NOT NULL,
+        cdr_source_type integer,
+        callid character varying(80) NOT NULL,
+        caller_id_number character varying(80) NOT NULL,
+        caller_id_name character varying(80) NOT NULL,
+        destination_number character varying(80) NOT NULL,
+        dialcode character varying(10),
+        state character varying(5),
+        channel character varying(80),
+        starting_date timestamp with time zone NOT NULL,
+        duration integer NOT NULL,
+        billsec integer NOT NULL,
+        progresssec integer,
+        answersec integer,
+        waitsec integer,
+        hangup_cause_id integer,
+        hangup_cause character varying(80),
+        direction integer NOT NULL,
+        country_code character varying(3),
+        accountcode character varying(40),
+        buy_rate numeric(10,5),
+        buy_cost numeric(12,5),
+        sell_rate numeric(10,5),
+        sell_cost numeric(12,5),
+        data jsonb
+    )`
 
 type Pusher struct {
 	db                *sql.DB
@@ -91,29 +115,17 @@ func (p *Pusher) Connect() error {
 }
 
 func (p *Pusher) buildInsertQuery(fetched_results map[int][]string) error {
-	str_fields, extra := get_fields_insert(p.cdr_fields)
+	str_fieldlist, extra := build_fieldlist_insert(p.cdr_fields)
 	if extra == true {
 		println("handle extra fields...")
 	}
-	list_field := make(map[string]int)
-	i := 0
-	values := ""
-	for _, v := range p.cdr_fields {
-		i = i + 1
-		if list_field[v.Dest_field] == 0 {
-			list_field[v.Dest_field] = 1
-			values = values + "$" + strconv.Itoa(i) + ", "
-		}
-	}
-	println(values)
-	// Remove last coma
-	valuesFmt := values[0 : len(values)-2]
-	println(valuesFmt)
+	str_valuelist := build_valuelist_insert(p.cdr_fields)
+
 	// parse the string cdr_fields
 	const tsql = "INSERT INTO {{.Table}} ({{.List_fields}}) VALUES ({{.Values}})"
 	var str_sql bytes.Buffer
 
-	sqlb := PushSQL{Table: "imported_cdr", List_fields: str_fields, Values: valuesFmt}
+	sqlb := PushSQL{Table: "imported_cdr", List_fields: str_fieldlist, Values: str_valuelist}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&str_sql, sqlb)
@@ -137,7 +149,7 @@ func (p *Pusher) BatchInsert() error {
 	insertStmt, err := p.db.Prepare(p.sql_query)
 	defer insertStmt.Close()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	tx, err := p.db.Begin()
