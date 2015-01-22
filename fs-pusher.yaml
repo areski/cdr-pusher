@@ -8,8 +8,7 @@ pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbn
 
 # Used when storage_dest_type = postgres
 # pg_store_table: the DB table name to store CDRs in Postgres
-#TODO: Not implemented (hardcoded at the moment)
-pg_store_table: "cdr_import"
+table_destination: "cdr_import"
 
 # Used when storage_dest_type = riak
 # riak_connect: connect string to connect to Riak used by riak.ConnectClient
@@ -52,11 +51,11 @@ cdr_fields:
     - orig_field: duration
       dest_field: duration
       type_field: int
-    - orig_field: "datetime(end_stamp)"
-      dest_field: extra
-      type_field: jsonb
     # - orig_field: "strftime('%s', answer_stamp)" # convert to epoch
     - orig_field: "datetime(answer_stamp)"
+      dest_field: extra
+      type_field: jsonb
+    - orig_field: "datetime(end_stamp)"
       dest_field: extra
       type_field: jsonb
 

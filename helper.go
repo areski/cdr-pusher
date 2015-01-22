@@ -56,11 +56,15 @@ func get_fields_select(cdr_fields []ParseFields) string {
 	return str_fields
 }
 
-func build_fieldlist_insert(cdr_fields []ParseFields) (string, bool) {
+func build_fieldlist_insert(cdr_fields []ParseFields) (string, map[int]string) {
+	// extradata build a list of map[int]string to store all the index/field
+	// that will be stored in the extra field. ie map[int]string{5: "datetime(answer_stamp)", 6: "datetime(end_stamp)"}
+	var extradata = map[int]string{}
 	extra := false
 	str_fields := ""
-	for _, l := range cdr_fields {
+	for i, l := range cdr_fields {
 		if l.Dest_field == "extra" {
+			extradata[i] = l.Orig_field
 			extra = true
 			continue
 		}
@@ -72,8 +76,9 @@ func build_fieldlist_insert(cdr_fields []ParseFields) (string, bool) {
 	// Add 1 extra at the end
 	if extra == true {
 		str_fields = str_fields + ", extra"
+		return str_fields, extradata
 	}
-	return str_fields, extra
+	return str_fields, nil
 }
 
 func build_valuelist_insert(cdr_fields []ParseFields) string {

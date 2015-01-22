@@ -61,15 +61,15 @@ type Config struct {
 	// First letter of variables need to be capital letter
 	Storage_destination string
 	Pg_datasourcename   string
+	Table_destination   string
 	Riak_connect        string
 	Storage_source      string
 	Db_file             string
 	Db_table            string
 	Heartbeat           int
 	Max_push_batch      int
-	// Cdr_fields          string
-	Cdr_fields []ParseFields
-	Switch_ip  string
+	Cdr_fields          []ParseFields
+	Switch_ip           string
 }
 
 var config = Config{}

@@ -38,7 +38,7 @@ func main() {
 	}
 
 	p := new(Pusher)
-	p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip)
+	p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
 	err = p.Push(f.results)
 	if err != nil {
 		log.Fatal(err)
