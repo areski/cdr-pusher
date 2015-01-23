@@ -63,7 +63,7 @@ func build_fieldlist_insert(cdr_fields []ParseFields) (string, map[int]string) {
 	extra := false
 	str_fields := ""
 	for i, l := range cdr_fields {
-		if l.Dest_field == "extra" {
+		if l.Dest_field == "extradata" {
 			extradata[i] = l.Orig_field
 			extra = true
 			continue
@@ -75,7 +75,7 @@ func build_fieldlist_insert(cdr_fields []ParseFields) (string, map[int]string) {
 	}
 	// Add 1 extra at the end
 	if extra == true {
-		str_fields = str_fields + ", extra"
+		str_fields = str_fields + ", extradata"
 		return str_fields, extradata
 	}
 	return str_fields, nil

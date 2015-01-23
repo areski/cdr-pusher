@@ -27,7 +27,9 @@ package main
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"text/template"
 	// "log"
@@ -64,7 +66,7 @@ var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS {{.Table}} (
     )`
 
 type Pusher struct {
-	db                *sql.DB
+	db                *sqlx.DB
 	pg_datasourcename string
 	table_destination string
 	cdr_fields        []ParseFields
@@ -108,7 +110,8 @@ func (p *Pusher) Init(pg_datasourcename string, cdr_fields []ParseFields, switch
 
 func (p *Pusher) Connect() error {
 	var err error
-	p.db, err = sql.Open("postgres", p.pg_datasourcename)
+	// We are using sqlx in order to take advantage of NamedExec
+	p.db, err = sqlx.Connect("postgres", p.pg_datasourcename)
 	if err != nil {
 		fmt.Println("Failed to connect", err)
 		return err
@@ -116,7 +119,7 @@ func (p *Pusher) Connect() error {
 	return nil
 }
 
-func (p *Pusher) buildInsertQuery(fetched_results map[int][]string) error {
+func (p *Pusher) buildInsertQuery() error {
 	str_fieldlist, extradata := build_fieldlist_insert(p.cdr_fields)
 	str_valuelist := build_valuelist_insert(p.cdr_fields)
 
@@ -138,7 +141,6 @@ func (p *Pusher) buildInsertQuery(fetched_results map[int][]string) error {
 		return err
 	}
 	p.sql_query = str_sql.String()
-	fmt.Println("INSERT_SQL: ", p.sql_query)
 	return nil
 }
 
@@ -147,40 +149,60 @@ func (p *Pusher) DBClose() error {
 	return nil
 }
 
-func (p *Pusher) BatchInsert() error {
+func (p *Pusher) FmtDataExport(fetched_results map[int][]string) map[int]map[string]interface{} {
+	data := make(map[int]map[string]interface{})
+	i := 0
+	for _, v := range fetched_results {
+		data[i] = make(map[string]interface{})
+		data[i]["id"] = v[0]
+		data[i]["switch"] = p.switch_ip
+		extradata := make(map[string]string)
+		for j, f := range p.cdr_fields {
+			if f.Dest_field == "extradata" {
+				extradata[f.Orig_field] = v[j+1]
+			} else {
+				data[i][f.Dest_field] = v[j+1]
+			}
+		}
+		jsonExtra, err := json.Marshal(extradata)
+		if err != nil {
+			// TODO: log error
+			println("Error:", err.Error())
+			panic(err)
+		} else {
+			data[i]["extradata"] = string(jsonExtra)
+		}
+		i = i + 1
+	}
+	return data
+}
+
+func (p *Pusher) BatchInsert(fetched_results map[int][]string) error {
 	// create the statement string
-	// var sql_query string = `INSERT INTO cdr_import
-	//        (id, callid, destination_number, caller_id_name, caller_id_number, duration, data, starting_date)
-	//        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	var sql_query string = `INSERT INTO cdr_import
-        (destination_number, caller_id_name, caller_id_number, duration, data)
-        VALUES ($1, $2, $3, $4, $5)`
-	println("sql_query:")
-	println(sql_query)
-	println(p.sql_query)
-	insertStmt, err := p.db.Prepare(sql_query)
+	fmt.Printf("FETCHED_RESULTS:\n%#v \n", fetched_results)
+	insertStmt, err := p.db.Prepare(p.sql_query)
 	defer insertStmt.Close()
 	if err != nil {
 		println("Error:", err.Error())
 		panic(err)
 	}
 
-	tx, err := p.db.Begin()
+	// tx, err := p.db.Begin()
+	tx := p.db.MustBegin()
 	if err != nil {
 		println("Error:", err.Error())
 		panic(err)
 	}
+	data := p.FmtDataExport(fetched_results)
+	fmt.Printf("\n\nData:\n%#v \n", data)
 
-	// Batch Insert
-	data := []map[string]string{
-		{"field1": "1", "field2": "1"},
-		{"field1": "2", "field2": "2"},
-		{"field1": "3", "field2": "3"},
-	}
 	var res sql.Result
-	for _, v := range data {
-		println("row:", v["field1"], v["field2"])
-		res, err = tx.Stmt(insertStmt).Exec(v["field1"], v["field2"], v["field2"], v["field2"], v["field2"])
+	for _, vmap := range data {
+		// res, err = tx.Stmt(insertStmt).Exec(vmap["field1"], vmap["field2"], vmap["field2"], vmap["field2"], vmap["field2"])
+		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
+		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
+		_, err = tx.NamedExec(`INSERT INTO cdr_import (switch, caller_id_name, caller_id_number, destination_number, duration, extradata) VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)`, vmap)
+
 		if err != nil {
 			println("Exec err:", err.Error())
 		} else {
@@ -199,16 +221,6 @@ func (p *Pusher) BatchInsert() error {
 		println("Error:", err.Error())
 		panic(err)
 	}
-
-	// lastId, err := res.LastInsertId()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// rowCnt, err := res.RowsAffected()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// log.Printf("ID = %d, affected = %d\n", lastId, rowCnt)
 	return nil
 }
 
@@ -243,12 +255,12 @@ func (p *Pusher) Push(fetched_results map[int][]string) error {
 		return err
 	}
 	// Prepare SQL query
-	err = p.buildInsertQuery(fetched_results)
+	err = p.buildInsertQuery()
 	if err != nil {
 		return err
 	}
 	// Insert in Batch to DB
-	err = p.BatchInsert()
+	err = p.BatchInsert(fetched_results)
 	if err != nil {
 		return err
 	}
