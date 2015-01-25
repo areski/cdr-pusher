@@ -37,6 +37,9 @@ max_push_batch: 200
 # ${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}
 
 cdr_fields:
+    - orig_field: uuid
+      dest_field: callid
+      type_field: string
     - orig_field: caller_id_name
       dest_field: caller_id_name
       type_field: string
@@ -49,6 +52,12 @@ cdr_fields:
     - orig_field: duration
       dest_field: duration
       type_field: int
+    - orig_field: billsec
+      dest_field: billsec
+      type_field: int
+    - orig_field: "datetime(start_stamp)"
+      dest_field: starting_date
+      type_field: date
     # - orig_field: "strftime('%s', answer_stamp)" # convert to epoch
     - orig_field: "datetime(answer_stamp)"
       dest_field: extradata

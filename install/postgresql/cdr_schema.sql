@@ -22,7 +22,7 @@ CREATE TABLE cdr_import (
     waitsec integer,
     hangup_cause_id integer,
     hangup_cause character varying(80),
-    direction integer NOT NULL,
+    direction integer,
     country_code character varying(3),
     accountcode character varying(40),
     buy_rate numeric(10,5),
@@ -31,3 +31,23 @@ CREATE TABLE cdr_import (
     sell_cost numeric(12,5),
     data jsonb
 );
+
+
+--
+-- cdr_source_type - type integer
+-- acceptable values:
+-- * unknown: 0
+-- * freeswitch: 1
+-- * asterisk: 2
+-- * yate: 3
+-- * kamailio: 4
+-- * opensips: 5
+--
+
+
+--
+-- direction - type integer
+-- acceptable values:
+-- * inbound: 1
+-- * outbound: 2
+--

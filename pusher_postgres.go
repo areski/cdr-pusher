@@ -55,14 +55,14 @@ var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS {{.Table}} (
         waitsec integer,
         hangup_cause_id integer,
         hangup_cause character varying(80),
-        direction integer NOT NULL,
+        direction integer,
         country_code character varying(3),
         accountcode character varying(40),
         buy_rate numeric(10,5),
         buy_cost numeric(12,5),
         sell_rate numeric(10,5),
         sell_cost numeric(12,5),
-        data jsonb
+        extradata jsonb
     )`
 
 type Pusher struct {
@@ -180,13 +180,14 @@ func (p *Pusher) FmtDataExport(fetched_results map[int][]string) map[int]map[str
 func (p *Pusher) BatchInsert(fetched_results map[int][]string) error {
 	// create the statement string
 	fmt.Printf("FETCHED_RESULTS:\n%#v \n", fetched_results)
-	insertStmt, err := p.db.Prepare(p.sql_query)
-	defer insertStmt.Close()
-	if err != nil {
-		println("Error:", err.Error())
-		panic(err)
-	}
-
+	fmt.Printf("INSERT STATEMENT:\n%s \n", p.sql_query)
+	// insertStmt, err := p.db.Prepare(p.sql_query)
+	// defer insertStmt.Close()
+	// if err != nil {
+	// 	println("Error:", err.Error())
+	// 	panic(err)
+	// }
+	var err error
 	// tx, err := p.db.Begin()
 	tx := p.db.MustBegin()
 	if err != nil {
@@ -201,7 +202,9 @@ func (p *Pusher) BatchInsert(fetched_results map[int][]string) error {
 		// res, err = tx.Stmt(insertStmt).Exec(vmap["field1"], vmap["field2"], vmap["field2"], vmap["field2"], vmap["field2"])
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
 		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
-		_, err = tx.NamedExec(`INSERT INTO cdr_import (switch, caller_id_name, caller_id_number, destination_number, duration, extradata) VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)`, vmap)
+
+		// _, err = tx.NamedExec(`INSERT INTO cdr_import (switch, caller_id_name, caller_id_number, destination_number, duration, extradata) VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)`, vmap)
+		_, err = tx.NamedExec(p.sql_query, vmap)
 
 		if err != nil {
 			println("Exec err:", err.Error())

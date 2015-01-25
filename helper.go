@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"net"
-	"strconv"
+	// "strconv"
 )
 
 // https://code.google.com/p/whispering-gophers/source/browse/util/helper.go
@@ -61,38 +61,39 @@ func build_fieldlist_insert(cdr_fields []ParseFields) (string, map[int]string) {
 	// that will be stored in the extra field. ie map[int]string{5: "datetime(answer_stamp)", 6: "datetime(end_stamp)"}
 	var extradata = map[int]string{}
 	extra := false
-	str_fields := ""
+	str_fields := "switch, "
 	for i, l := range cdr_fields {
 		if l.Dest_field == "extradata" {
 			extradata[i] = l.Orig_field
 			extra = true
 			continue
 		}
-		if str_fields != "" {
-			str_fields = str_fields + ", "
-		}
 		str_fields = str_fields + l.Dest_field
+		str_fields = str_fields + ", "
 	}
 	// Add 1 extra at the end
 	if extra == true {
-		str_fields = str_fields + ", extradata"
+		str_fields = str_fields + "extradata"
 		return str_fields, extradata
 	}
-	return str_fields, nil
+	// Remove last comma
+	fieldsFmt := str_fields[0 : len(str_fields)-2]
+	return fieldsFmt, nil
 }
 
+// function to help building:
+// VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)
 func build_valuelist_insert(cdr_fields []ParseFields) string {
 	list_field := make(map[string]int)
-	i := 0
-	values := ""
-	for _, v := range cdr_fields {
-		i = i + 1
-		if list_field[v.Dest_field] == 0 {
-			list_field[v.Dest_field] = 1
-			values = values + "$" + strconv.Itoa(i) + ", "
+	values := ":switch, "
+	for _, l := range cdr_fields {
+		if list_field[l.Dest_field] == 0 {
+			list_field[l.Dest_field] = 1
+			// values = values + "$" + strconv.Itoa(i) + ", "
+			values = values + ":" + l.Dest_field + ", "
 		}
 	}
-	// Remove last coma
+	// Remove last comma
 	valuesFmt := values[0 : len(values)-2]
 	println(valuesFmt)
 	return valuesFmt
