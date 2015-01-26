@@ -16,10 +16,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/kr/pretty"
+	// "github.com/kr/pretty"
 	"log"
 	"time"
 )
+
+const WAITTIME = 30
 
 func validate_config(config Config) error {
 	switch config.Storage_source {
@@ -52,6 +54,8 @@ func cofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 			panic(err)
 		}
 	}
+	// Wait 1 second before sending the result
+	time.Sleep(time.Second * time.Duration(config.Heartbeat))
 	chan_res <- f.results
 }
 
@@ -60,7 +64,6 @@ func copusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 	println("copusher")
 	// Send signal to go_fetch to fetch
 	chan_sync <- true
-	time.Sleep(time.Second * 5)
 	// waiting for CDRs on channel
 	select {
 	case results := <-chan_res:
@@ -74,7 +77,7 @@ func copusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 				panic(err)
 			}
 		}
-	case <-time.After(time.Second * 5):
+	case <-time.After(time.Second * WAITTIME):
 		fmt.Println("Nothing received :(")
 	}
 }
@@ -83,7 +86,7 @@ func main() {
 	fmt.Printf("StartTime: %v\n", time.Now())
 
 	LoadConfig(Default_conf)
-	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
+	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	if err := validate_config(config); err != nil {
 		panic(err)
 	}

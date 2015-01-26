@@ -26,7 +26,7 @@ db_file: "./sqlitedb/cdr.db"
 db_table: "cdr"
 
 # heartbeat: Frequence of check for new CDRs in seconds
-heartbeat: 15
+heartbeat: 5
 
 # max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
 max_push_batch: 200
