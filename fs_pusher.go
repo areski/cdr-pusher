@@ -21,10 +21,6 @@ import (
 	"time"
 )
 
-func go_fetcher(config Config) {
-
-}
-
 func validate_config(config Config) error {
 	switch config.Storage_source {
 	case "sqlite":
@@ -41,41 +37,71 @@ func validate_config(config Config) error {
 	return nil
 }
 
-func main() {
-
-	fmt.Printf("StartTime: %v\n", time.Now())
-
-	// LoadConfig
-	LoadConfig(Default_conf)
-	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
-
-	if err := validate_config(config); err != nil {
-		panic(err)
-	}
-
+// Fetch CDRs from datasource
+func cofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+	println("cofetcher")
+	// TODO: move chan_sync top of f.Fetch and add a loop
+	<-chan_sync
 	f := new(SQLFetcher)
-
 	if config.Storage_destination == "sqlite" {
 		f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
 		// Fetch CDRs from SQLite
 		err := f.Fetch()
 		if err != nil {
 			log.Fatal(err)
+			panic(err)
 		}
+	}
+	chan_res <- f.results
+}
+
+// Push CDRs to storage
+func copusher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+	println("copusher")
+	// Send signal to go_fetch to fetch
+	chan_sync <- true
+	time.Sleep(time.Second * 5)
+	// waiting for CDRs on channel
+	select {
+	case results := <-chan_res:
+		if config.Storage_destination == "postgres" {
+			// Push CDRs to PostgreSQL
+			p := new(PGPusher)
+			p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
+			err := p.Push(results)
+			if err != nil {
+				log.Fatal(err)
+				panic(err)
+			}
+		}
+	case <-time.After(time.Second * 5):
+		fmt.Println("Nothing received :(")
+	}
+}
+
+func main() {
+	fmt.Printf("StartTime: %v\n", time.Now())
+
+	LoadConfig(Default_conf)
+	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
+	if err := validate_config(config); err != nil {
+		panic(err)
 	}
 
-	if config.Storage_destination == "postgres" {
-		// Push CDRs to PostgreSQL
-		p := new(PGPusher)
-		p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
-		err := p.Push(f.results)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	chan_sync := make(chan bool, 1)
+	chan_res := make(chan map[int][]string, 1)
+
+	// Start coroutines
+	println("Start coroutines")
+	go cofetcher(config, chan_res, chan_sync)
+	go copusher(config, chan_res, chan_sync)
 
 	// 1. Create Go routine / Tick every x second: heartbeat
 	// 2. Send Results through channels
 
 	fmt.Printf("StopTime: %v\n", time.Now())
+
+	var input string
+	fmt.Scanln(&input)
+	fmt.Println("done")
 }
