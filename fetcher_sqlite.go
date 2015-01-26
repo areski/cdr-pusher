@@ -13,7 +13,7 @@ import (
 const CDR_TABLE_NAME = "cdr"
 const CDR_FLAG_FIELD = "flag_imported"
 
-type Fetcher struct {
+type SQLFetcher struct {
 	db             *sql.DB
 	db_file        string
 	db_table       string
@@ -40,7 +40,7 @@ type UpdateCDR struct {
 	CDRids    string
 }
 
-func (f *Fetcher) Init(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) {
+func (f *SQLFetcher) Init(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) {
 	f.db = nil
 	f.db_file = db_file
 	f.db_table = db_table
@@ -51,12 +51,12 @@ func (f *Fetcher) Init(db_file string, db_table string, max_push_batch int, cdr_
 	f.sql_query = ""
 }
 
-// func NewFetcher(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) *Fetcher {
+// func NewSQLFetcher(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) *SQLFetcher {
 // 	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
-// 	return &Fetcher{db: db, db_file: db_file, db_table: db_table, sql_query: "", max_push_batch, 0, cdr_fields, nil}
+// 	return &SQLFetcher{db: db, db_file: db_file, db_table: db_table, sql_query: "", max_push_batch, 0, cdr_fields, nil}
 // }
 
-func (f *Fetcher) Connect() error {
+func (f *SQLFetcher) Connect() error {
 	var err error
 	f.db, err = sql.Open("sqlite3", "./sqlitedb/cdr.db")
 	if err != nil {
@@ -66,7 +66,7 @@ func (f *Fetcher) Connect() error {
 	return nil
 }
 
-func (f *Fetcher) PrepareQuery() error {
+func (f *SQLFetcher) PrepareQuery() error {
 	str_fields := get_fields_select(f.cdr_fields)
 	// parse the string cdr_fields
 	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Clause}} {{.Order}} {{.Limit}}"
@@ -86,12 +86,12 @@ func (f *Fetcher) PrepareQuery() error {
 	return nil
 }
 
-func (f *Fetcher) DBClose() error {
+func (f *SQLFetcher) DBClose() error {
 	defer f.db.Close()
 	return nil
 }
 
-func (f *Fetcher) ScanResult() error {
+func (f *SQLFetcher) ScanResult() error {
 	rows, err := f.db.Query(f.sql_query)
 	defer rows.Close()
 	if err != nil {
@@ -139,7 +139,7 @@ func (f *Fetcher) ScanResult() error {
 	return nil
 }
 
-func (f *Fetcher) UpdateCdrTable(status int) error {
+func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE rowid IN ({{.CDRids}})"
 	var str_sql bytes.Buffer
 
@@ -157,7 +157,7 @@ func (f *Fetcher) UpdateCdrTable(status int) error {
 	return nil
 }
 
-func (f *Fetcher) AddFieldTrackImport() error {
+func (f *SQLFetcher) AddFieldTrackImport() error {
 	const tsql = "ALTER TABLE {{.Table}} ADD {{.Fieldname}} INTEGER DEFAULT 0"
 	var str_sql bytes.Buffer
 
@@ -175,7 +175,7 @@ func (f *Fetcher) AddFieldTrackImport() error {
 	return nil
 }
 
-func (f *Fetcher) Fetch() error {
+func (f *SQLFetcher) Fetch() error {
 	// Connect to DB
 	err := f.Connect()
 	if err != nil {

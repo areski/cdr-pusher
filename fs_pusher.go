@@ -28,24 +28,29 @@ func main() {
 	LoadConfig(Default_conf)
 	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 
-	// Fetch SQLite CDRs
-	// f := NewFetcher(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
-	f := new(Fetcher)
-	f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
-	err := f.Fetch()
-	if err != nil {
-		log.Fatal(err)
-	}
+	f := new(SQLFetcher)
 
-	if config.Storage_destination == "postgres" {
-		p := new(PGPusher)
-		p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
-		err = p.Push(f.results)
+	if config.Storage_source == "sqlite" {
+		f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
+		// Fetch CDRs from SQLite
+		err := f.Fetch()
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		fmt.Println("Define a pushing method with setting 'storage_destination'!\n")
+		fmt.Println("Define a fetching method using the conf setting 'storage_source'!\n")
+	}
+
+	if config.Storage_destination == "postgres" {
+		// Push CDRs to PostgreSQL
+		p := new(PGPusher)
+		p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
+		err := p.Push(f.results)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("Define a pushing method using the conf setting 'storage_destination'!\n")
 	}
 
 	// 1. Create Go routine / Tick every x second: heartbeat
