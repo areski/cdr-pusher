@@ -14,11 +14,32 @@ package main
 //
 
 import (
+	"errors"
 	"fmt"
 	"github.com/kr/pretty"
 	"log"
 	"time"
 )
+
+func go_fetcher(config Config) {
+
+}
+
+func validate_config(config Config) error {
+	switch config.Storage_source {
+	case "sqlite":
+		// could check more settings
+	default:
+		return errors.New("Not a valid conf setting 'storage_source'")
+	}
+	switch config.Storage_destination {
+	case "postgres":
+		// could check more settings
+	default:
+		return errors.New("Not a valid conf setting 'storage_destination'")
+	}
+	return nil
+}
 
 func main() {
 
@@ -28,17 +49,19 @@ func main() {
 	LoadConfig(Default_conf)
 	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 
+	if err := validate_config(config); err != nil {
+		panic(err)
+	}
+
 	f := new(SQLFetcher)
 
-	if config.Storage_source == "sqlite" {
+	if config.Storage_destination == "sqlite" {
 		f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
 		// Fetch CDRs from SQLite
 		err := f.Fetch()
 		if err != nil {
 			log.Fatal(err)
 		}
-	} else {
-		fmt.Println("Define a fetching method using the conf setting 'storage_source'!\n")
 	}
 
 	if config.Storage_destination == "postgres" {
@@ -49,8 +72,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-	} else {
-		fmt.Println("Define a pushing method using the conf setting 'storage_destination'!\n")
 	}
 
 	// 1. Create Go routine / Tick every x second: heartbeat
