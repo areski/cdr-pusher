@@ -29,7 +29,7 @@ CREATE TABLE cdr_import (
     buy_cost numeric(12,5),
     sell_rate numeric(10,5),
     sell_cost numeric(12,5),
-    data jsonb
+    extradata jsonb
 );
 
 

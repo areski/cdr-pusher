@@ -9,6 +9,10 @@ import (
 	"text/template"
 )
 
+// #TODO: move those consts to config file
+const CDR_TABLE_NAME = "cdr"
+const CDR_FLAG_FIELD = "flag_imported"
+
 type Fetcher struct {
 	db             *sql.DB
 	db_file        string
@@ -18,6 +22,7 @@ type Fetcher struct {
 	cdr_fields     []ParseFields
 	results        map[int][]string
 	sql_query      string
+	list_ids       string
 }
 
 type FetchSQL struct {
@@ -26,6 +31,13 @@ type FetchSQL struct {
 	Limit       string
 	Clause      string
 	Order       string
+}
+
+type UpdateCDR struct {
+	Table     string
+	Fieldname string
+	Status    int
+	CDRids    string
 }
 
 func (f *Fetcher) Init(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) {
@@ -57,11 +69,12 @@ func (f *Fetcher) Connect() error {
 func (f *Fetcher) PrepareQuery() error {
 	str_fields := get_fields_select(f.cdr_fields)
 	// parse the string cdr_fields
-	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Limit}} {{.Clause}} {{.Order}}"
+	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Clause}} {{.Order}} {{.Limit}}"
 	var str_sql bytes.Buffer
 
 	slimit := fmt.Sprintf("LIMIT %d", f.max_push_batch)
-	sqlb := FetchSQL{List_fields: str_fields, Table: "cdr", Limit: slimit}
+	clause := "WHERE " + CDR_FLAG_FIELD + "<>1"
+	sqlb := FetchSQL{List_fields: str_fields, Table: "cdr", Limit: slimit, Clause: clause}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&str_sql, sqlb)
@@ -92,6 +105,7 @@ func (f *Fetcher) ScanResult() error {
 	}
 	// Result is your slice string.
 	f.results = make(map[int][]string)
+	list_ids := ""
 	rawResult := make([][]byte, len(cols))
 	result := make([]string, len(cols))
 
@@ -107,6 +121,9 @@ func (f *Fetcher) ScanResult() error {
 			return err
 		}
 		for i, raw := range rawResult {
+			if i == 0 {
+				list_ids = list_ids + string(raw) + ", "
+			}
 			if raw == nil {
 				result[i] = "\\N"
 			} else {
@@ -115,6 +132,45 @@ func (f *Fetcher) ScanResult() error {
 			f.results[k] = append(f.results[k], result[i])
 		}
 		k++
+	}
+	if list_ids != "" {
+		f.list_ids = list_ids[0 : len(list_ids)-2]
+	}
+	return nil
+}
+
+func (f *Fetcher) UpdateCdrTable(status int) error {
+	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE rowid IN ({{.CDRids}})"
+	var str_sql bytes.Buffer
+
+	sqlb := UpdateCDR{Table: CDR_TABLE_NAME, Fieldname: CDR_FLAG_FIELD, Status: status, CDRids: f.list_ids}
+	t := template.Must(template.New("sql").Parse(tsql))
+
+	err := t.Execute(&str_sql, sqlb)
+	fmt.Println("UPDATE TABLE: ", &str_sql)
+	if err != nil {
+		return err
+	}
+	if _, err := f.db.Exec(str_sql.String()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *Fetcher) AddFieldTrackImport() error {
+	const tsql = "ALTER TABLE {{.Table}} ADD {{.Fieldname}} INTEGER DEFAULT 0"
+	var str_sql bytes.Buffer
+
+	sqlb := UpdateCDR{Table: CDR_TABLE_NAME, Fieldname: CDR_FLAG_FIELD, Status: 0}
+	t := template.Must(template.New("sql").Parse(tsql))
+
+	err := t.Execute(&str_sql, sqlb)
+	fmt.Println("ALTER TABLE: ", &str_sql)
+	if err != nil {
+		return err
+	}
+	if _, err := f.db.Exec(str_sql.String()); err != nil {
+		return err
 	}
 	return nil
 }
@@ -126,6 +182,11 @@ func (f *Fetcher) Fetch() error {
 		return err
 	}
 	defer f.db.Close()
+
+	err = f.AddFieldTrackImport()
+	if err != nil {
+		println("Exec err (expected field already exist):", err.Error())
+	}
 	// Prepare SQL query
 	err = f.PrepareQuery()
 	if err != nil {
@@ -133,6 +194,11 @@ func (f *Fetcher) Fetch() error {
 	}
 	// Get Results
 	err = f.ScanResult()
+	if err != nil {
+		return err
+	}
+
+	err = f.UpdateCdrTable(1)
 	if err != nil {
 		return err
 	}

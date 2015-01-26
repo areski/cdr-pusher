@@ -37,11 +37,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	p := new(Pusher)
-	p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
-	err = p.Push(f.results)
-	if err != nil {
-		log.Fatal(err)
+	if config.Storage_destination == "postgres" {
+		p := new(PGPusher)
+		p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
+		err = p.Push(f.results)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("Define a pushing method with setting 'storage_destination'!\n")
 	}
 
 	// 1. Create Go routine / Tick every x second: heartbeat

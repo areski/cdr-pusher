@@ -65,7 +65,7 @@ var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS {{.Table}} (
         extradata jsonb
     )`
 
-type Pusher struct {
+type PGPusher struct {
 	db                *sqlx.DB
 	pg_datasourcename string
 	table_destination string
@@ -81,7 +81,7 @@ type PushSQL struct {
 	Values      string
 }
 
-func (p *Pusher) Init(pg_datasourcename string, cdr_fields []ParseFields, switch_ip string, table_destination string) {
+func (p *PGPusher) Init(pg_datasourcename string, cdr_fields []ParseFields, switch_ip string, table_destination string) {
 	p.db = nil
 	p.pg_datasourcename = pg_datasourcename
 	p.cdr_fields = cdr_fields
@@ -96,19 +96,7 @@ func (p *Pusher) Init(pg_datasourcename string, cdr_fields []ParseFields, switch
 	p.table_destination = table_destination
 }
 
-// func NewPusher(pg_datasourcename string, cdr_fields []ParseFields, switch_ip string) *Pusher {
-// 	// Set a default config switch_ip if empty
-// 	if switch_ip == "" {
-// 		ip, err := externalIP()
-// 		if err == nil {
-// 			switch_ip = ip
-// 		}
-// 	}
-// 	db, _ := sql.Open("postgres", pg_datasourcename)
-// 	return &Pusher{db, db_file, db_table, "", max_push_batch, 0, cdr_fields, nil}
-// }
-
-func (p *Pusher) Connect() error {
+func (p *PGPusher) Connect() error {
 	var err error
 	// We are using sqlx in order to take advantage of NamedExec
 	p.db, err = sqlx.Connect("postgres", p.pg_datasourcename)
@@ -119,7 +107,7 @@ func (p *Pusher) Connect() error {
 	return nil
 }
 
-func (p *Pusher) buildInsertQuery() error {
+func (p *PGPusher) buildInsertQuery() error {
 	str_fieldlist, extradata := build_fieldlist_insert(p.cdr_fields)
 	str_valuelist := build_valuelist_insert(p.cdr_fields)
 
@@ -144,12 +132,12 @@ func (p *Pusher) buildInsertQuery() error {
 	return nil
 }
 
-func (p *Pusher) DBClose() error {
+func (p *PGPusher) DBClose() error {
 	defer p.db.Close()
 	return nil
 }
 
-func (p *Pusher) FmtDataExport(fetched_results map[int][]string) map[int]map[string]interface{} {
+func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[string]interface{} {
 	data := make(map[int]map[string]interface{})
 	i := 0
 	for _, v := range fetched_results {
@@ -177,16 +165,10 @@ func (p *Pusher) FmtDataExport(fetched_results map[int][]string) map[int]map[str
 	return data
 }
 
-func (p *Pusher) BatchInsert(fetched_results map[int][]string) error {
+func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 	// create the statement string
 	fmt.Printf("FETCHED_RESULTS:\n%#v \n", fetched_results)
 	fmt.Printf("INSERT STATEMENT:\n%s \n", p.sql_query)
-	// insertStmt, err := p.db.Prepare(p.sql_query)
-	// defer insertStmt.Close()
-	// if err != nil {
-	// 	println("Error:", err.Error())
-	// 	panic(err)
-	// }
 	var err error
 	// tx, err := p.db.Begin()
 	tx := p.db.MustBegin()
@@ -199,24 +181,17 @@ func (p *Pusher) BatchInsert(fetched_results map[int][]string) error {
 
 	var res sql.Result
 	for _, vmap := range data {
-		// res, err = tx.Stmt(insertStmt).Exec(vmap["field1"], vmap["field2"], vmap["field2"], vmap["field2"], vmap["field2"])
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
 		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
-
-		// _, err = tx.NamedExec(`INSERT INTO cdr_import (switch, caller_id_name, caller_id_number, destination_number, duration, extradata) VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)`, vmap)
-		_, err = tx.NamedExec(p.sql_query, vmap)
+		res, err = tx.NamedExec(p.sql_query, vmap)
 
 		if err != nil {
 			println("Exec err:", err.Error())
 		} else {
-			id, err := res.LastInsertId()
-			if err != nil {
-				println("LastInsertId:", id)
-			} else {
-				println("Error:", err.Error())
-			}
 			num, err := res.RowsAffected()
-			println("RowsAffected:", num)
+			if err != nil {
+				println("RowsAffected:", num)
+			}
 		}
 	}
 
@@ -227,11 +202,11 @@ func (p *Pusher) BatchInsert(fetched_results map[int][]string) error {
 	return nil
 }
 
-func (p *Pusher) CreateCdrTable() error {
+func (p *PGPusher) CreateCdrTable() error {
 	// parse the string cdr_fields
 	var str_sql bytes.Buffer
 
-	sqlb := PushSQL{Table: p.table_destination, List_fields: "", Values: ""}
+	sqlb := PushSQL{Table: p.table_destination}
 	t := template.Must(template.New("sql").Parse(SQL_Create_Table))
 
 	err := t.Execute(&str_sql, sqlb)
@@ -245,7 +220,7 @@ func (p *Pusher) CreateCdrTable() error {
 	return nil
 }
 
-func (p *Pusher) Push(fetched_results map[int][]string) error {
+func (p *PGPusher) Push(fetched_results map[int][]string) error {
 	// Connect to DB
 	err := p.Connect()
 	if err != nil {
