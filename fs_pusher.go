@@ -14,10 +14,10 @@ package main
 //
 
 import (
-	// "fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -43,7 +43,7 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 		}
 		chan_res <- f.results
 		// Wait x seconds between each DB fetch | Heartbeat
-		log.Debug("Sleep for %d seconds!\n", config.Heartbeat)
+		log.Debug("Sleep for " + strconv.Itoa(config.Heartbeat) + " seconds!")
 		time.Sleep(time.Second * time.Duration(config.Heartbeat))
 	}
 }
@@ -63,7 +63,7 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 				p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
 				err := p.Push(results)
 				if err != nil {
-					println(err.Error())
+					log.Error(err.Error())
 					panic(err)
 				}
 			}
@@ -83,7 +83,6 @@ func run_app() (string, error) {
 	chan_res := make(chan map[int][]string, 1)
 
 	// Start coroutines
-	println("Start coroutines")
 	go gofetcher(config, chan_res, chan_sync)
 	go gopusher(config, chan_res, chan_sync)
 
@@ -134,12 +133,7 @@ func main() {
 	// log.SetLevel(log.WarnLevel)
 	log.SetLevel(log.DebugLevel)
 
-	log.Debug("debug")
-	log.Info("info")
-	log.Warn("warning")
-	log.Error("err")
-
-	log.Debug("StartTime: %v\n", time.Now())
+	log.Info("StartTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 	run_app()
-	log.Debug("StopTime: %v\n", time.Now())
+	log.Info("StopTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 }

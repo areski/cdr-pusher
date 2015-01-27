@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	// "github.com/coopernurse/gorp"
+	log "github.com/Sirupsen/logrus"
 	"text/template"
 )
 
@@ -60,7 +61,7 @@ func (f *SQLFetcher) Connect() error {
 	var err error
 	f.db, err = sql.Open("sqlite3", "./sqlitedb/cdr.db")
 	if err != nil {
-		fmt.Println("Failed to connect", err)
+		log.Error("Failed to connect", err)
 		return err
 	}
 	return nil
@@ -82,7 +83,7 @@ func (f *SQLFetcher) PrepareQuery() error {
 		panic(err)
 	}
 	f.sql_query = str_sql.String()
-	fmt.Println("SELECT_SQL: ", f.sql_query)
+	log.Debug("SELECT_SQL: ", f.sql_query)
 	return nil
 }
 
@@ -95,12 +96,12 @@ func (f *SQLFetcher) ScanResult() error {
 	rows, err := f.db.Query(f.sql_query)
 	defer rows.Close()
 	if err != nil {
-		fmt.Println("Failed to run query", err)
+		log.Error("Failed to run query", err)
 		return err
 	}
 	cols, err := rows.Columns()
 	if err != nil {
-		fmt.Println("Failed to get columns", err)
+		log.Error("Failed to get columns", err)
 		return err
 	}
 	// Result is your slice string.
@@ -117,7 +118,7 @@ func (f *SQLFetcher) ScanResult() error {
 	for rows.Next() {
 		err = rows.Scan(dest...)
 		if err != nil {
-			fmt.Println("Failed to scan row", err)
+			log.Error("Failed to scan row", err)
 			return err
 		}
 		for i, raw := range rawResult {
@@ -147,7 +148,7 @@ func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&str_sql, sqlb)
-	fmt.Println("UPDATE TABLE: ", &str_sql)
+	log.Debug("UPDATE TABLE: ", &str_sql)
 	if err != nil {
 		return err
 	}
@@ -165,7 +166,7 @@ func (f *SQLFetcher) AddFieldTrackImport() error {
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&str_sql, sqlb)
-	fmt.Println("ALTER TABLE: ", &str_sql)
+	log.Debug("ALTER TABLE: ", &str_sql)
 	if err != nil {
 		return err
 	}
@@ -185,7 +186,7 @@ func (f *SQLFetcher) Fetch() error {
 
 	err = f.AddFieldTrackImport()
 	if err != nil {
-		println("Exec err (expected field already exist):", err.Error())
+		log.Error("Exec err (expected field already exist):", err.Error())
 	}
 	// Prepare SQL query
 	err = f.PrepareQuery()
@@ -202,6 +203,6 @@ func (f *SQLFetcher) Fetch() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("RESULT:\n%#v\n", f.results)
+	log.Debug("RESULT:\n%#v\n", f.results)
 	return nil
 }

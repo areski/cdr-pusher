@@ -40,9 +40,10 @@
 package main
 
 import (
-	// "flag"
-	// "fmt"
 	"errors"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/kr/pretty"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -94,7 +95,8 @@ func LoadConfig(configfile string) bool {
 	if len(config.Storage_destination) == 0 || len(config.Storage_source) == 0 || len(config.Db_file) == 0 || len(config.Db_table) == 0 {
 		panic("Settings not properly configured!")
 	}
-	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
+	prettyfmt := fmt.Sprintf("Loaded Config:\n%# v", pretty.Formatter(config))
+	log.Debug(prettyfmt)
 	return true
 }
 

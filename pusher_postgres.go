@@ -28,7 +28,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"text/template"
@@ -101,23 +101,16 @@ func (p *PGPusher) Connect() error {
 	// We are using sqlx in order to take advantage of NamedExec
 	p.db, err = sqlx.Connect("postgres", p.pg_datasourcename)
 	if err != nil {
-		fmt.Println("Failed to connect", err)
+		log.Error("Failed to connect", err)
 		return err
 	}
 	return nil
 }
 
 func (p *PGPusher) buildInsertQuery() error {
-	str_fieldlist, extradata := build_fieldlist_insert(p.cdr_fields)
+	str_fieldlist, _ := build_fieldlist_insert(p.cdr_fields)
 	str_valuelist := build_valuelist_insert(p.cdr_fields)
 
-	if extradata != nil {
-		println("handle extra fields...")
-		// extradata := map[int]string{5: "datetime(answer_stamp)", 6: "datetime(end_stamp)"}
-		fmt.Printf("extradata:%#v \n", extradata)
-	}
-
-	// parse the string cdr_fields
 	const tsql = "INSERT INTO {{.Table}} ({{.List_fields}}) VALUES ({{.Values}})"
 	var str_sql bytes.Buffer
 
@@ -155,7 +148,7 @@ func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[s
 		jsonExtra, err := json.Marshal(extradata)
 		if err != nil {
 			// TODO: log error
-			println("Error:", err.Error())
+			log.Error("Error:", err.Error())
 			panic(err)
 		} else {
 			data[i]["extradata"] = string(jsonExtra)
@@ -167,18 +160,20 @@ func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[s
 
 func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 	// create the statement string
-	fmt.Printf("FETCHED_RESULTS:\n%#v \n", fetched_results)
-	fmt.Printf("INSERT STATEMENT:\n%s \n", p.sql_query)
+	log.WithFields(log.Fields{
+		"fetched_results": fetched_results,
+	}).Debug("Results:")
+	log.WithFields(log.Fields{
+		"p.sql_query": p.sql_query,
+	}).Debug("Query:")
 	var err error
 	// tx, err := p.db.Begin()
 	tx := p.db.MustBegin()
 	if err != nil {
-		println("Error:", err.Error())
+		log.Error("Error:", err.Error())
 		panic(err)
 	}
 	data := p.FmtDataExport(fetched_results)
-	fmt.Printf("\n\nData:\n%#v \n", data)
-
 	var res sql.Result
 	for _, vmap := range data {
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
@@ -186,17 +181,17 @@ func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 		res, err = tx.NamedExec(p.sql_query, vmap)
 
 		if err != nil {
-			println("Exec err:", err.Error())
+			log.Error("Exec err:", err.Error())
 		} else {
 			num, err := res.RowsAffected()
 			if err != nil {
-				println("RowsAffected:", num)
+				log.Debug("RowsAffected:", num)
 			}
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		println("Error:", err.Error())
+		log.Error("Error:", err.Error())
 		panic(err)
 	}
 	return nil
@@ -242,6 +237,6 @@ func (p *PGPusher) Push(fetched_results map[int][]string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("RESULT:\n num_pushed:%#v \n", p.num_pushed)
+	log.Debug("Total number pushed:", p.num_pushed)
 	return nil
 }

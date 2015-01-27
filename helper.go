@@ -95,6 +95,5 @@ func build_valuelist_insert(cdr_fields []ParseFields) string {
 	}
 	// Remove last comma
 	valuesFmt := values[0 : len(values)-2]
-	println(valuesFmt)
 	return valuesFmt
 }

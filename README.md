@@ -171,11 +171,11 @@ FS-pusher is licensed under MIT, see `LICENSE` file.
 
 - [x] Fetch & Push CDRs to Postgresql
 - [x] Implement using goroutine with channel to communicate between Fetcher <--> Pusher
-- [ ] Add logging
-- [ ] Push CDRs to Riak
-- [ ] Deploy with Supervisord
+- [x] Add logging
 - [ ] Add test / travis-ci / Badge
 - [ ] godoc / https://gowalker.org
+- [ ] Push CDRs to Riak
+- [ ] Deploy with Supervisord
 - [ ] Review install / deployment documentation
 - [ ] Install script Go App
 - [ ] Ansible Support
