@@ -66,6 +66,5 @@ cdr_fields:
       dest_field: extradata
       type_field: jsonb
 
-
 # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
 switch_ip: ""

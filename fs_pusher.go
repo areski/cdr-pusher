@@ -18,10 +18,14 @@ import (
 	"fmt"
 	// "github.com/kr/pretty"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-const WAITTIME = 30
+// Wait time for results in goroutine
+const WAITTIME = 60
 
 func validate_config(config Config) error {
 	switch config.Storage_source {
@@ -40,51 +44,54 @@ func validate_config(config Config) error {
 }
 
 // Fetch CDRs from datasource
-func cofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
-	println("cofetcher")
-	// TODO: move chan_sync top of f.Fetch and add a loop
-	<-chan_sync
-	f := new(SQLFetcher)
-	if config.Storage_destination == "sqlite" {
-		f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
-		// Fetch CDRs from SQLite
-		err := f.Fetch()
-		if err != nil {
-			log.Fatal(err)
-			panic(err)
-		}
-	}
-	// Wait 1 second before sending the result
-	time.Sleep(time.Second * time.Duration(config.Heartbeat))
-	chan_res <- f.results
-}
-
-// Push CDRs to storage
-func copusher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
-	println("copusher")
-	// Send signal to go_fetch to fetch
-	chan_sync <- true
-	// waiting for CDRs on channel
-	select {
-	case results := <-chan_res:
-		if config.Storage_destination == "postgres" {
-			// Push CDRs to PostgreSQL
-			p := new(PGPusher)
-			p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
-			err := p.Push(results)
+func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+	for {
+		println("gofetcher")
+		// TODO: move chan_sync top of f.Fetch and add a loop
+		<-chan_sync
+		f := new(SQLFetcher)
+		if config.Storage_destination == "sqlite" {
+			f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
+			// Fetch CDRs from SQLite
+			err := f.Fetch()
 			if err != nil {
 				log.Fatal(err)
 				panic(err)
 			}
 		}
-	case <-time.After(time.Second * WAITTIME):
-		fmt.Println("Nothing received :(")
+		chan_res <- f.results
+		// Wait x seconds between each DB fetch | Heartbeat
+		fmt.Printf("Sleep for %d seconds!\n", config.Heartbeat)
+		time.Sleep(time.Second * time.Duration(config.Heartbeat))
 	}
 }
 
-func main() {
-	fmt.Printf("StartTime: %v\n", time.Now())
+// Push CDRs to storage
+func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+	for {
+		println("gopusher")
+		// Send signal to go_fetch to fetch
+		chan_sync <- true
+		// waiting for CDRs on channel
+		select {
+		case results := <-chan_res:
+			if config.Storage_destination == "postgres" {
+				// Push CDRs to PostgreSQL
+				p := new(PGPusher)
+				p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
+				err := p.Push(results)
+				if err != nil {
+					log.Fatal(err)
+					panic(err)
+				}
+			}
+		case <-time.After(time.Second * WAITTIME):
+			fmt.Println("Nothing received yet...")
+		}
+	}
+}
 
+func run_app() (string, error) {
 	LoadConfig(Default_conf)
 	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	if err := validate_config(config); err != nil {
@@ -96,15 +103,32 @@ func main() {
 
 	// Start coroutines
 	println("Start coroutines")
-	go cofetcher(config, chan_res, chan_sync)
-	go copusher(config, chan_res, chan_sync)
+	go gofetcher(config, chan_res, chan_sync)
+	go gopusher(config, chan_res, chan_sync)
 
-	// 1. Create Go routine / Tick every x second: heartbeat
-	// 2. Send Results through channels
+	// Set up channel on which to send signal notifications.
+	// We must use a buffered channel or risk missing the signal
+	// if we're not ready to receive when the signal is sent.
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
+	// loop work cycle which listen for command or interrupt
+	// by system signal
+	for {
+		select {
+		case killSignal := <-interrupt:
+			log.Println("Got signal:", killSignal)
+			if killSignal == os.Interrupt {
+				return "Service was interruped by system signal", nil
+			}
+			return "Service was killed", nil
+		}
+	}
+
+}
+
+func main() {
+	fmt.Printf("StartTime: %v\n", time.Now())
+	run_app()
 	fmt.Printf("StopTime: %v\n", time.Now())
-
-	var input string
-	fmt.Scanln(&input)
-	fmt.Println("done")
 }
