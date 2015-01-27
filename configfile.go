@@ -94,6 +94,7 @@ func LoadConfig(configfile string) bool {
 	if len(config.Storage_destination) == 0 || len(config.Storage_source) == 0 || len(config.Db_file) == 0 || len(config.Db_table) == 0 {
 		panic("Settings not properly configured!")
 	}
+	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	return true
 }
 

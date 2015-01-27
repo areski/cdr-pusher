@@ -16,22 +16,18 @@ package main
 import (
 	"fmt"
 	// "github.com/kr/pretty"
-	"github.com/op/go-logging"
-	// "log"
+	// "github.com/Sirupsen/logrus"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
+// var log = logrus.New()
+
 // Wait time for results in goroutine
 const WAITTIME = 60
-
-var log = logging.MustGetLogger("example")
-
-var format = logging.MustStringFormatter(
-	"%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}",
-)
 
 // Fetch CDRs from datasource
 func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
@@ -45,7 +41,7 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
 			if err != nil {
-				log.Error(err.Error())
+				println(err.Error())
 				panic(err)
 			}
 		}
@@ -58,6 +54,7 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 
 // Push CDRs to storage
 func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+	// log.Debug("gopusher")
 	for {
 		println("gopusher")
 		// Send signal to go_fetch to fetch
@@ -71,7 +68,7 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 				p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
 				err := p.Push(results)
 				if err != nil {
-					log.Error(err.Error())
+					println(err.Error())
 					panic(err)
 				}
 			}
@@ -82,8 +79,8 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 }
 
 func run_app() (string, error) {
+	// log.Info("run_app")
 	LoadConfig(Default_conf)
-	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	if err := ValidateConfig(config); err != nil {
 		panic(err)
 	}
@@ -107,45 +104,49 @@ func run_app() (string, error) {
 	for {
 		select {
 		case killSignal := <-interrupt:
-			log.Error("Got signal:", killSignal)
+			log.Println("Got signal:", killSignal)
 			if killSignal == os.Interrupt {
 				return "Service was interruped by system signal", nil
 			}
 			return "Service was killed", nil
 		}
 	}
-
+	return "", nil
 }
 
-type HideLogger string
+func init() {
+	// log.Out = os.Stderr
+	// // Log as JSON instead of the default ASCII formatter.
+	// log.SetFormatter(&log.JSONFormatter{})
 
-func (h HideLogger) Redacted() interface{} {
-	return logging.Redact(string(h))
+	// // Use the Airbrake hook to report errors that have Error severity or above to
+	// // an exception tracker. You can create custom hooks, see the Hooks section.
+	// // log.AddHook(&logrus_airbrake.AirbrakeHook{})
+
+	// // backendlog := logging.NewLogBackend(os.Stderr, "", 0)
+	// f, err := os.OpenFile("testlogfile.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// defer f.Close()
+	// // Output to stderr instead of stdout, could also be a file.
+	// // log.SetOutput(f)
+	// log.SetOutput(os.Stderr)
+
+	// // Only log the warning severity or above.
+	// // log.SetLevel(log.WarnLevel)
+	// log.SetLevel(log.DebugLevel)
 }
 
 func main() {
-	// backendlog := logging.NewLogBackend(os.Stderr, "", 0)
-	f, err := os.OpenFile("testlogfile.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer f.Close()
-	backendlog := logging.NewLogBackend(f, "", 0)
 
-	backendFormatter := logging.NewBackendFormatter(backendlog, format)
-	backendLeveled := logging.AddModuleLevel(backendFormatter)
-	// Only errors and more severe messages should be sent to backend log
-	backendLeveled.SetLevel(logging.DEBUG, "")
-	logging.SetBackend(backendLeveled)
+	// log.Debug("debug")
+	// log.Info("info")
+	// log.Warn("warning")
+	// log.Error("err")
+	// log.Fatal("fatal")
 
-	log.Debug("debug %s", HideLogger("secret message"))
-	log.Info("info")
-	log.Notice("notice")
-	log.Warning("warning")
-	log.Error("err")
-	log.Critical("crit")
-
-	fmt.Printf("StartTime: %v\n", time.Now())
+	// fmt.Printf("StartTime: %v\n", time.Now())
 	run_app()
-	fmt.Printf("StopTime: %v\n", time.Now())
+	// fmt.Printf("StopTime: %v\n", time.Now())
 }
