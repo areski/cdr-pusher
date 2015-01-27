@@ -14,10 +14,10 @@ package main
 //
 
 import (
-	"errors"
 	"fmt"
 	// "github.com/kr/pretty"
-	"log"
+	"github.com/op/go-logging"
+	// "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,21 +27,11 @@ import (
 // Wait time for results in goroutine
 const WAITTIME = 60
 
-func validate_config(config Config) error {
-	switch config.Storage_source {
-	case "sqlite":
-		// could check more settings
-	default:
-		return errors.New("Not a valid conf setting 'storage_source'")
-	}
-	switch config.Storage_destination {
-	case "postgres":
-		// could check more settings
-	default:
-		return errors.New("Not a valid conf setting 'storage_destination'")
-	}
-	return nil
-}
+var log = logging.MustGetLogger("example")
+
+var format = logging.MustStringFormatter(
+	"%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}",
+)
 
 // Fetch CDRs from datasource
 func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
@@ -55,7 +45,7 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err.Error())
 				panic(err)
 			}
 		}
@@ -81,7 +71,7 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 				p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
 				err := p.Push(results)
 				if err != nil {
-					log.Fatal(err)
+					log.Error(err.Error())
 					panic(err)
 				}
 			}
@@ -94,7 +84,7 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 func run_app() (string, error) {
 	LoadConfig(Default_conf)
 	// log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
-	if err := validate_config(config); err != nil {
+	if err := ValidateConfig(config); err != nil {
 		panic(err)
 	}
 
@@ -117,7 +107,7 @@ func run_app() (string, error) {
 	for {
 		select {
 		case killSignal := <-interrupt:
-			log.Println("Got signal:", killSignal)
+			log.Error("Got signal:", killSignal)
 			if killSignal == os.Interrupt {
 				return "Service was interruped by system signal", nil
 			}
@@ -127,7 +117,34 @@ func run_app() (string, error) {
 
 }
 
+type HideLogger string
+
+func (h HideLogger) Redacted() interface{} {
+	return logging.Redact(string(h))
+}
+
 func main() {
+	// backendlog := logging.NewLogBackend(os.Stderr, "", 0)
+	f, err := os.OpenFile("testlogfile.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer f.Close()
+	backendlog := logging.NewLogBackend(f, "", 0)
+
+	backendFormatter := logging.NewBackendFormatter(backendlog, format)
+	backendLeveled := logging.AddModuleLevel(backendFormatter)
+	// Only errors and more severe messages should be sent to backend log
+	backendLeveled.SetLevel(logging.DEBUG, "")
+	logging.SetBackend(backendLeveled)
+
+	log.Debug("debug %s", HideLogger("secret message"))
+	log.Info("info")
+	log.Notice("notice")
+	log.Warning("warning")
+	log.Error("err")
+	log.Critical("crit")
+
 	fmt.Printf("StartTime: %v\n", time.Now())
 	run_app()
 	fmt.Printf("StopTime: %v\n", time.Now())

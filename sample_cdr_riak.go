@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/kr/pretty"
 	"github.com/tpjg/goriakpbc"
-	"log"
+	// "log"
 )
 
 func second_main() {
@@ -16,7 +16,7 @@ func second_main() {
 
 	// LoadConfig
 	LoadConfig(Default_conf)
-	log.Printf("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
+	log.Debug("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	// ----------------------- RIAK ------------------------
 
 	err := riak.ConnectClient("127.0.0.1:8087")

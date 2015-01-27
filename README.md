@@ -19,10 +19,10 @@ record which is more conveniant than importing from CSV files.
 
 To follow, we would like to implement:
 
-    - Extra DB backend support for FS: Mysql, CSV, etc...
-    - Add support to fetch Asterisk CDRs
-    - Add support to fetch Kamailio CDRs (Mysql) and CSV
-    - Implement Push to Riak (cf sample_cdr_riak.go)
+- Extra DB backend support for FS: Mysql, CSV, etc...
+- Add support to fetch Asterisk CDRs
+- Add support to fetch Kamailio CDRs (Mysql) and CSV
+- Implement Push to Riak (cf sample_cdr_riak.go)
 
 
 ## Install / Run

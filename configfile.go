@@ -42,6 +42,7 @@ package main
 import (
 	// "flag"
 	// "fmt"
+	"errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -94,4 +95,20 @@ func LoadConfig(configfile string) bool {
 		panic("Settings not properly configured!")
 	}
 	return true
+}
+
+func ValidateConfig(config Config) error {
+	switch config.Storage_source {
+	case "sqlite":
+		// could check more settings
+	default:
+		return errors.New("Not a valid conf setting 'storage_source'")
+	}
+	switch config.Storage_destination {
+	case "postgres":
+		// could check more settings
+	default:
+		return errors.New("Not a valid conf setting 'storage_destination'")
+	}
+	return nil
 }
