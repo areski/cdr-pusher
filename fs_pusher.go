@@ -14,17 +14,13 @@ package main
 //
 
 import (
-	"fmt"
-	// "github.com/kr/pretty"
-	// "github.com/Sirupsen/logrus"
-	"log"
+	// "fmt"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
-
-// var log = logrus.New()
 
 // Wait time for results in goroutine
 const WAITTIME = 60
@@ -32,7 +28,7 @@ const WAITTIME = 60
 // Fetch CDRs from datasource
 func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
 	for {
-		println("gofetcher")
+		log.Debug("gofetcher sending to chan_sync")
 		// TODO: move chan_sync top of f.Fetch and add a loop
 		<-chan_sync
 		f := new(SQLFetcher)
@@ -41,22 +37,21 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
 			if err != nil {
-				println(err.Error())
+				log.Error(err.Error())
 				panic(err)
 			}
 		}
 		chan_res <- f.results
 		// Wait x seconds between each DB fetch | Heartbeat
-		fmt.Printf("Sleep for %d seconds!\n", config.Heartbeat)
+		log.Debug("Sleep for %d seconds!\n", config.Heartbeat)
 		time.Sleep(time.Second * time.Duration(config.Heartbeat))
 	}
 }
 
 // Push CDRs to storage
 func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
-	// log.Debug("gopusher")
 	for {
-		println("gopusher")
+		log.Debug("gopusher waiting for chan_sync")
 		// Send signal to go_fetch to fetch
 		chan_sync <- true
 		// waiting for CDRs on channel
@@ -73,13 +68,12 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 				}
 			}
 		case <-time.After(time.Second * WAITTIME):
-			fmt.Println("Nothing received yet...")
+			log.Debug("Nothing received yet...")
 		}
 	}
 }
 
 func run_app() (string, error) {
-	// log.Info("run_app")
 	LoadConfig(Default_conf)
 	if err := ValidateConfig(config); err != nil {
 		panic(err)
@@ -104,7 +98,7 @@ func run_app() (string, error) {
 	for {
 		select {
 		case killSignal := <-interrupt:
-			log.Println("Got signal:", killSignal)
+			log.Warn("Got signal:", killSignal)
 			if killSignal == os.Interrupt {
 				return "Service was interruped by system signal", nil
 			}
@@ -114,39 +108,38 @@ func run_app() (string, error) {
 	return "", nil
 }
 
-func init() {
-	// log.Out = os.Stderr
-	// // Log as JSON instead of the default ASCII formatter.
+func main() {
+	// Log as JSON instead of the default ASCII formatter.
 	// log.SetFormatter(&log.JSONFormatter{})
 
-	// // Use the Airbrake hook to report errors that have Error severity or above to
-	// // an exception tracker. You can create custom hooks, see the Hooks section.
-	// // log.AddHook(&logrus_airbrake.AirbrakeHook{})
+	// Use the Airbrake hook to report errors that have Error severity or above to
+	// an exception tracker. You can create custom hooks, see the Hooks section.
+	// log.AddHook(&logrus_airbrake.AirbrakeHook{})
 
-	// // backendlog := logging.NewLogBackend(os.Stderr, "", 0)
-	// f, err := os.OpenFile("testlogfile.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// defer f.Close()
-	// // Output to stderr instead of stdout, could also be a file.
-	// // log.SetOutput(f)
-	// log.SetOutput(os.Stderr)
+	setlogfile := false
+	if setlogfile {
+		// backendlog := logging.NewLogBackend(os.Stderr, "", 0)
+		f, err := os.OpenFile("fs-pusher.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			panic(err.Error())
+		}
+		defer f.Close()
+		// Output to stderr instead of stdout, could also be a file.
+		log.SetOutput(f)
+	} else {
+		log.SetOutput(os.Stderr)
+	}
 
-	// // Only log the warning severity or above.
-	// // log.SetLevel(log.WarnLevel)
-	// log.SetLevel(log.DebugLevel)
-}
+	// Only log the warning severity or above.
+	// log.SetLevel(log.WarnLevel)
+	log.SetLevel(log.DebugLevel)
 
-func main() {
+	log.Debug("debug")
+	log.Info("info")
+	log.Warn("warning")
+	log.Error("err")
 
-	// log.Debug("debug")
-	// log.Info("info")
-	// log.Warn("warning")
-	// log.Error("err")
-	// log.Fatal("fatal")
-
-	// fmt.Printf("StartTime: %v\n", time.Now())
+	log.Debug("StartTime: %v\n", time.Now())
 	run_app()
-	// fmt.Printf("StopTime: %v\n", time.Now())
+	log.Debug("StopTime: %v\n", time.Now())
 }
