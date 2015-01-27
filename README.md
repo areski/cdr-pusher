@@ -1,16 +1,28 @@
 # FS-Pusher
 
-FS-Pusher is a Go Application aims to run as a service that push CDRs from
-local DB storage (SQLite Supported) to a PostGreSQL or Riak Cluster.
+FS-Pusher is a Go Application that run as a service and push CDRs (Call Detail Record) from your local storage
+(SQLite Supported) to a PostGreSQL or Riak Cluster.
+
+This can be used to centralize or backup your CDRs, software like CDR-Stats can then be used to provide
+reporting on those CDRs.
 
 [![circleci](https://circleci.com/gh/areski/fs-pusher.png)](https://circleci.com/gh/areski/fs-pusher)
 
 [![Go Walker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/areski/fs-pusher)
 
 
-## Usage
+## Roadmap
 
-You may find Pinguino useful if you want to activate/deactivate some services or run custom actions on your computer/server based on the output of webservices and surroundings.
+Our first focus was to support FreeSWITCH CDRs, we decided to go for SQLite support as it seems to
+be the less invasive and easy enough to configure, plus SQLite give the posibility to mark the pushed
+record which is more conveniant than importing from CSV files.
+
+To follow, we would like to implement:
+
+    - Extra DB backend support for FS: Mysql, CSV, etc...
+    - Add support to fetch Asterisk CDRs
+    - Add support to fetch Kamailio CDRs (Mysql) and CSV
+    - Implement Push to Riak (cf sample_cdr_riak.go)
 
 
 ## Install / Run
@@ -35,7 +47,11 @@ Config file `/etc/fs-pusher.yaml`:
 
     # Used when storage_dest_type = postgres
     # datasourcename: connect string to connect to PostgreSQL used by sql.Open
-    pg_datasourcename: "host=localhost dbname=testdb sslmode=disable"
+    pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbname=fs-pusher sslmode=disable"
+
+    # Used when storage_dest_type = postgres
+    # pg_store_table: the DB table name to store CDRs in Postgres
+    table_destination: "cdr_import"
 
     # Used when storage_dest_type = riak
     # riak_connect: connect string to connect to Riak used by riak.ConnectClient
@@ -51,14 +67,45 @@ Config file `/etc/fs-pusher.yaml`:
     db_table: "cdr"
 
     # heartbeat: Frequence of check for new CDRs in seconds
-    heartbeat: 15
+    heartbeat: 5
 
     # max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
     max_push_batch: 200
 
+    # NOTE: cdr_fields is not implemented (See TODO)
+
     # cdr_fields: list of fields with type to transit - format is "original_field:destination_field:type, ..."
     # ${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}
-    cdr_fields: "caller_id_name:caller_id_name:string,caller_id_number:caller_id_number:string,destination_number:destination_number:string,context:context:string,start_stamp:start_stamp:date,answer_stamp:answer_stamp:date,end_stamp:end_stamp:date,duration:duration:integer,billsec:billsec:integer,hangup_cause:hangup_cause:integer,uuid:uuid:string,bleg_uuid:bleg_uuid:string,accountcode:accountcode:string"
+
+    cdr_fields:
+        - orig_field: uuid
+          dest_field: callid
+          type_field: string
+        - orig_field: caller_id_name
+          dest_field: caller_id_name
+          type_field: string
+        - orig_field: caller_id_number
+          dest_field: caller_id_number
+          type_field: string
+        - orig_field: destination_number
+          dest_field: destination_number
+          type_field: string
+        - orig_field: duration
+          dest_field: duration
+          type_field: int
+        - orig_field: billsec
+          dest_field: billsec
+          type_field: int
+        - orig_field: "datetime(start_stamp)"
+          dest_field: starting_date
+          type_field: date
+        # - orig_field: "strftime('%s', answer_stamp)" # convert to epoch
+        - orig_field: "datetime(answer_stamp)"
+          dest_field: extradata
+          type_field: jsonb
+        - orig_field: "datetime(end_stamp)"
+          dest_field: extradata
+          type_field: jsonb
 
     # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
     switch_ip: ""
@@ -122,8 +169,10 @@ FS-pusher is licensed under MIT, see `LICENSE` file.
 
 ## TODO
 
-- [ ] Fetch & Push CDRs to Riak
+- [x] Fetch & Push CDRs to Postgresql
+- [x] Implement using goroutine with channel to communicate between Fetcher <--> Pusher
 - [ ] Add logging
+- [ ] Push CDRs to Riak
 - [ ] Deploy with Supervisord
 - [ ] Add test / travis-ci / Badge
 - [ ] godoc / https://gowalker.org
