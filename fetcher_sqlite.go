@@ -10,10 +10,18 @@ import (
 	"text/template"
 )
 
-// #TODO: move those consts to config file
+// TODO(areski): move those 2 const to the config file
+
+// CDR_TABLE_NAME is the table that will be used for import
 const CDR_TABLE_NAME = "cdr"
+
+// CDR_FLAG_FIELD define the field that will be used to mark the imported CDR records
 const CDR_FLAG_FIELD = "flag_imported"
 
+// SQLFetcher is a database sql fetcher for CDRS, records will be retrieved
+// from SQLFetcher and later pushed to the Pusher.
+// SQLFetcher structure keeps tracks DB file, table, results and further data
+// needed to fetch.
 type SQLFetcher struct {
 	db             *sql.DB
 	db_file        string
@@ -26,6 +34,7 @@ type SQLFetcher struct {
 	list_ids       string
 }
 
+// FetchSQL is used to build the SQL query to fetch on the Database source
 type FetchSQL struct {
 	List_fields string
 	Table       string
@@ -34,6 +43,8 @@ type FetchSQL struct {
 	Order       string
 }
 
+// UpdateCDR is used to build the SQL query to update the Database source and
+// track the records imported
 type UpdateCDR struct {
 	Table     string
 	Fieldname string
@@ -41,6 +52,8 @@ type UpdateCDR struct {
 	CDRids    string
 }
 
+// Init is a constructor for SQLFetcher
+// It will help setting db_file, db_table, max_push_batch and cdr_fields
 func (f *SQLFetcher) Init(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) {
 	f.db = nil
 	f.db_file = db_file
@@ -57,6 +70,7 @@ func (f *SQLFetcher) Init(db_file string, db_table string, max_push_batch int, c
 // 	return &SQLFetcher{db: db, db_file: db_file, db_table: db_table, sql_query: "", max_push_batch, 0, cdr_fields, nil}
 // }
 
+// Connect will connect to the DBMS, here we implemented the connection to SQLite
 func (f *SQLFetcher) Connect() error {
 	var err error
 	f.db, err = sql.Open("sqlite3", "./sqlitedb/cdr.db")
@@ -67,6 +81,7 @@ func (f *SQLFetcher) Connect() error {
 	return nil
 }
 
+// PrepareQuery method will build the fetching SQL query
 func (f *SQLFetcher) PrepareQuery() error {
 	str_fields := get_fields_select(f.cdr_fields)
 	// parse the string cdr_fields
@@ -87,11 +102,16 @@ func (f *SQLFetcher) PrepareQuery() error {
 	return nil
 }
 
+// DBClose is helping defering the closing of the DB connector
 func (f *SQLFetcher) DBClose() error {
 	defer f.db.Close()
 	return nil
 }
 
+// ScanResult method will scan the results and build the 2 propreties
+// 'results' and 'list_ids'.
+// - 'results' will held a map[int][]string that will contain all records
+// - 'list_ids' will held a list of IDs from the results as a string
 func (f *SQLFetcher) ScanResult() error {
 	rows, err := f.db.Query(f.sql_query)
 	defer rows.Close()
@@ -140,6 +160,7 @@ func (f *SQLFetcher) ScanResult() error {
 	return nil
 }
 
+// UpdateCdrTable method is used to mark the record that has been imported
 func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE rowid IN ({{.CDRids}})"
 	var str_sql bytes.Buffer
@@ -158,6 +179,7 @@ func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	return nil
 }
 
+// AddFieldTrackImport method will add a new field to your DB schema to track the import
 func (f *SQLFetcher) AddFieldTrackImport() error {
 	const tsql = "ALTER TABLE {{.Table}} ADD {{.Fieldname}} INTEGER DEFAULT 0"
 	var str_sql bytes.Buffer
@@ -176,6 +198,8 @@ func (f *SQLFetcher) AddFieldTrackImport() error {
 	return nil
 }
 
+// Fetch is the main method that will connect to the DB, add field for import tracking,
+// prepare query and finally build the results
 func (f *SQLFetcher) Fetch() error {
 	// Connect to DB
 	err := f.Connect()

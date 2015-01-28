@@ -108,13 +108,13 @@ func ValidateConfig(config Config) error {
 	case "sqlite":
 		// could check more settings
 	default:
-		return errors.New("Not a valid conf setting 'storage_source'")
+		return errors.New("not a valid conf setting 'storage_source'")
 	}
 	switch config.StorageDestination {
 	case "postgres":
 		// could check more settings
 	default:
-		return errors.New("Not a valid conf setting 'storage_destination'")
+		return errors.New("not a valid conf setting 'storage_destination'")
 	}
 	return nil
 }
