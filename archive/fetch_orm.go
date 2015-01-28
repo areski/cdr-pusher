@@ -7,7 +7,7 @@ import (
 )
 
 // dep:    "github.com/jmoiron/sqlx"
-func fetch_cdr_sqlite_sqlx() {
+func fetchCdrSqliteSqlx() {
 	db, err := sqlx.Open("sqlite3", "./sqlitedb/cdr.db")
 	defer db.Close()
 
@@ -29,7 +29,7 @@ func fetch_cdr_sqlite_sqlx() {
 }
 
 // dep:    "github.com/jinzhu/gorm"
-func fetch_cdr_sqlite_gorm() {
+func fetchCdrSqliteGorm() {
 	db, err := gorm.Open("sqlite3", "./sqlitedb/cdr.db")
 	if err != nil {
 		log.Fatal(err)
@@ -45,12 +45,13 @@ func fetch_cdr_sqlite_gorm() {
 	fmt.Println("-------------------------------")
 }
 
+// CdrGorm used by Gorm to access CDR entity
 type CdrGorm struct {
-	Rowid            int64
-	Caller_id_name   string
-	Caller_id_number string
-	Duration         int64
-	Start_stamp      time.Time
+	Rowid          int64     `gorm:"column:rowid"`
+	CallerIDName   string    `gorm:"column:caller_id_name"`
+	CallerIDNumber string    `gorm:"column:caller_id_number"`
+	Duration       int64     `gorm:"column:duration"`
+	StartStamp     time.Time `gorm:"column:start_stamp"`
 	// destination_number string
 	// context            string
 	// start_stamp        time.Time
@@ -64,6 +65,7 @@ type CdrGorm struct {
 	// account_code       string
 }
 
+// TableName define a different table name
 func (c CdrGorm) TableName() string {
 	return "cdr"
 }

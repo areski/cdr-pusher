@@ -40,6 +40,19 @@ To install and run the fs-pusher application, follow those steps:
     $ ./bin/fs-pusher
 
 
+## Testing
+
+To run the tests, follow this step:
+
+    $ cd fs-pusher
+    $ go test .
+
+
+## Test Coverage
+
+Visit gocover for the test coverage: http://gocover.io/github.com/areski/fs-pusher
+
+
 ## Configuration file
 
 Config file `/etc/fs-pusher.yaml`:
@@ -162,6 +175,11 @@ A shell script is provided to install FreeSWITCH on Debian 7.x: https://github.c
 FreeSWITCH mod_cdr_sqlite is used to store locally the CDRs prior being fetch and send by fs_pusher: https://wiki.freeswitch.org/wiki/Mod_cdr_sqlite
 
 Some customization can be achieved by editing the config file `fs-pusher.yaml` and the config file for Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to send specific fields in your CDRs, you will need to change both conf files to ensure that the data is stored in SQLite and that Fs-pusher fetch and send this new data.
+
+
+## GoLint
+
+http://go-lint.appspot.com/github.com/areski/fs-pusher
 
 
 ## License

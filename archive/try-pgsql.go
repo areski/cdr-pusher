@@ -28,9 +28,9 @@ func main() {
 	// 	panic(err)
 	// }
 
-	sql_create := `CREATE TABLE IF NOT EXISTS tabletest
+	sqlCreate := `CREATE TABLE IF NOT EXISTS tabletest
         (id SERIAL, field1 text, field2 text, created timestamp DEFAULT current_timestamp)`
-	if _, err := db.Exec(sql_create); err != nil {
+	if _, err := db.Exec(sqlCreate); err != nil {
 		panic(err)
 	}
 
