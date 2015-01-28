@@ -54,25 +54,25 @@ var prodConf = "/etc/fs-pusher.yaml"
 
 // ParseFields held the structure for the configuration file
 type ParseFields struct {
-	Orig_field string
-	Dest_field string
-	Type_field string
+	OrigField string "orig_field"
+	DestField string "dest_field"
+	TypeField string "type_field"
 }
 
 // Config held the structure of the config file
 type Config struct {
 	// First letter of variables need to be capital letter
-	Storage_destination string
-	Pg_datasourcename   string
-	Table_destination   string
-	Riak_connect        string
-	Storage_source      string
-	Db_file             string
-	Db_table            string
-	Heartbeat           int
-	Max_push_batch      int
-	Cdr_fields          []ParseFields
-	Switch_ip           string
+	StorageDestination string        "storage_destination"
+	PGDatasourcename   string        "pg_datasourcename"
+	TableDestination   string        "table_destination"
+	RiakConnect        string        "riak_connect"
+	StorageSource      string        "storage_source"
+	DBFile             string        "db_file"
+	DBTable            string        "db_table"
+	Heartbeat          int           "heartbeat"
+	MaxPushBatch       int           "max_push_batch"
+	CDRFields          []ParseFields "cdr_fields"
+	SwitchIP           string        "switch_ip"
 }
 
 var config = Config{}
@@ -93,7 +93,7 @@ func LoadConfig(configfile string) bool {
 	} else {
 		panic("Config file not defined!")
 	}
-	if len(config.Storage_destination) == 0 || len(config.Storage_source) == 0 || len(config.Db_file) == 0 || len(config.Db_table) == 0 {
+	if len(config.StorageDestination) == 0 || len(config.StorageSource) == 0 || len(config.DBFile) == 0 || len(config.DBTable) == 0 {
 		panic("Settings not properly configured!")
 	}
 	prettyfmt := fmt.Sprintf("Loaded Config:\n%# v", pretty.Formatter(config))
@@ -102,15 +102,15 @@ func LoadConfig(configfile string) bool {
 }
 
 // ValidateConfig will ensure that config file respect some rules for instance
-// have a Storage_source defined and Storage_destination set correctly
+// have a StorageSource defined and StorageDestination set correctly
 func ValidateConfig(config Config) error {
-	switch config.Storage_source {
+	switch config.StorageSource {
 	case "sqlite":
 		// could check more settings
 	default:
 		return errors.New("Not a valid conf setting 'storage_source'")
 	}
-	switch config.Storage_destination {
+	switch config.StorageDestination {
 	case "postgres":
 		// could check more settings
 	default:

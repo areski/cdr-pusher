@@ -139,10 +139,10 @@ func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[s
 		data[i]["switch"] = p.switch_ip
 		extradata := make(map[string]string)
 		for j, f := range p.cdr_fields {
-			if f.Dest_field == "extradata" {
-				extradata[f.Orig_field] = v[j+1]
+			if f.DestField == "extradata" {
+				extradata[f.OrigField] = v[j+1]
 			} else {
-				data[i][f.Dest_field] = v[j+1]
+				data[i][f.DestField] = v[j+1]
 			}
 		}
 		jsonExtra, err := json.Marshal(extradata)

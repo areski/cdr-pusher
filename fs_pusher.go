@@ -32,8 +32,8 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 		// TODO: move chan_sync top of f.Fetch and add a loop
 		<-chan_sync
 		f := new(SQLFetcher)
-		if config.Storage_destination == "sqlite" {
-			f.Init(config.Db_file, config.Db_table, config.Max_push_batch, config.Cdr_fields)
+		if config.StorageDestination == "sqlite" {
+			f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields)
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
 			if err != nil {
@@ -57,10 +57,10 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 		// waiting for CDRs on channel
 		select {
 		case results := <-chan_res:
-			if config.Storage_destination == "postgres" {
+			if config.StorageDestination == "postgres" {
 				// Push CDRs to PostgreSQL
 				p := new(PGPusher)
-				p.Init(config.Pg_datasourcename, config.Cdr_fields, config.Switch_ip, config.Table_destination)
+				p.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.TableDestination)
 				err := p.Push(results)
 				if err != nil {
 					log.Error(err.Error())

@@ -20,8 +20,8 @@ func TestLoadconfig(t *testing.T) {
 
 func TestParseFields(t *testing.T) {
 	cdr_fields := []ParseFields{
-		{Orig_field: "uuid", Dest_field: "callid", Type_field: "string"},
-		{Orig_field: "caller_id_name", Dest_field: "caller_id_name", Type_field: "string"},
+		{OrigField: "uuid", DestField: "callid", TypeField: "string"},
+		{OrigField: "caller_id_name", DestField: "caller_id_name", TypeField: "string"},
 	}
 	strfields := get_fields_select(cdr_fields)
 	if strfields != "rowid, uuid, caller_id_name" {
@@ -34,8 +34,8 @@ func TestParseFields(t *testing.T) {
 	}
 
 	cdr_fields = []ParseFields{
-		{Orig_field: "uuid", Dest_field: "callid", Type_field: "string"},
-		{Orig_field: "customfield", Dest_field: "extradata", Type_field: "jsonb"},
+		{OrigField: "uuid", DestField: "callid", TypeField: "string"},
+		{OrigField: "customfield", DestField: "extradata", TypeField: "jsonb"},
 	}
 
 	insertf_extra, extradata := build_fieldlist_insert(cdr_fields)

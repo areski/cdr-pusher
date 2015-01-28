@@ -51,7 +51,7 @@ func get_fields_select(cdr_fields []ParseFields) string {
 		if str_fields != "" {
 			str_fields = str_fields + ", "
 		}
-		str_fields = str_fields + l.Orig_field
+		str_fields = str_fields + l.OrigField
 	}
 	return str_fields
 }
@@ -63,12 +63,12 @@ func build_fieldlist_insert(cdr_fields []ParseFields) (string, map[int]string) {
 	extra := false
 	str_fields := "switch, "
 	for i, l := range cdr_fields {
-		if l.Dest_field == "extradata" {
-			extradata[i] = l.Orig_field
+		if l.DestField == "extradata" {
+			extradata[i] = l.OrigField
 			extra = true
 			continue
 		}
-		str_fields = str_fields + l.Dest_field
+		str_fields = str_fields + l.DestField
 		str_fields = str_fields + ", "
 	}
 	// Add 1 extra at the end
@@ -87,10 +87,10 @@ func build_valuelist_insert(cdr_fields []ParseFields) string {
 	list_field := make(map[string]int)
 	values := ":switch, "
 	for _, l := range cdr_fields {
-		if list_field[l.Dest_field] == 0 {
-			list_field[l.Dest_field] = 1
+		if list_field[l.DestField] == 0 {
+			list_field[l.DestField] = 1
 			// values = values + "$" + strconv.Itoa(i) + ", "
-			values = values + ":" + l.Dest_field + ", "
+			values = values + ":" + l.DestField + ", "
 		}
 	}
 	// Remove last comma
