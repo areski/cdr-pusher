@@ -69,22 +69,22 @@ type PGPusher struct {
 	db                *sqlx.DB
 	pg_datasourcename string
 	table_destination string
-	cdr_fields        []ParseFields
+	cdrFields         []ParseFields
 	switch_ip         string
 	num_pushed        int
-	sql_query         string
+	sqlQuery          string
 }
 
 type PushSQL struct {
-	List_fields string
-	Table       string
-	Values      string
+	ListFields string
+	Table      string
+	Values     string
 }
 
-func (p *PGPusher) Init(pg_datasourcename string, cdr_fields []ParseFields, switch_ip string, table_destination string) {
+func (p *PGPusher) Init(pg_datasourcename string, cdrFields []ParseFields, switch_ip string, table_destination string) {
 	p.db = nil
 	p.pg_datasourcename = pg_datasourcename
-	p.cdr_fields = cdr_fields
+	p.cdrFields = cdrFields
 	if switch_ip == "" {
 		ip, err := externalIP()
 		if err == nil {
@@ -92,7 +92,7 @@ func (p *PGPusher) Init(pg_datasourcename string, cdr_fields []ParseFields, swit
 		}
 	}
 	p.switch_ip = switch_ip
-	p.sql_query = ""
+	p.sqlQuery = ""
 	p.table_destination = table_destination
 }
 
@@ -108,20 +108,20 @@ func (p *PGPusher) Connect() error {
 }
 
 func (p *PGPusher) buildInsertQuery() error {
-	str_fieldlist, _ := build_fieldlist_insert(p.cdr_fields)
-	str_valuelist := build_valuelist_insert(p.cdr_fields)
+	str_fieldlist, _ := build_fieldlist_insert(p.cdrFields)
+	str_valuelist := build_valuelist_insert(p.cdrFields)
 
-	const tsql = "INSERT INTO {{.Table}} ({{.List_fields}}) VALUES ({{.Values}})"
-	var str_sql bytes.Buffer
+	const tsql = "INSERT INTO {{.Table}} ({{.ListFields}}) VALUES ({{.Values}})"
+	var strSQL bytes.Buffer
 
-	sqlb := PushSQL{Table: p.table_destination, List_fields: str_fieldlist, Values: str_valuelist}
+	sqlb := PushSQL{Table: p.table_destination, ListFields: str_fieldlist, Values: str_valuelist}
 	t := template.Must(template.New("sql").Parse(tsql))
 
-	err := t.Execute(&str_sql, sqlb)
+	err := t.Execute(&strSQL, sqlb)
 	if err != nil {
 		return err
 	}
-	p.sql_query = str_sql.String()
+	p.sqlQuery = strSQL.String()
 	return nil
 }
 
@@ -138,7 +138,7 @@ func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[s
 		data[i]["id"] = v[0]
 		data[i]["switch"] = p.switch_ip
 		extradata := make(map[string]string)
-		for j, f := range p.cdr_fields {
+		for j, f := range p.cdrFields {
 			if f.DestField == "extradata" {
 				extradata[f.OrigField] = v[j+1]
 			} else {
@@ -164,7 +164,7 @@ func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 		"fetched_results": fetched_results,
 	}).Debug("Results:")
 	log.WithFields(log.Fields{
-		"p.sql_query": p.sql_query,
+		"p.sqlQuery": p.sqlQuery,
 	}).Debug("Query:")
 	var err error
 	// tx, err := p.db.Begin()
@@ -178,7 +178,7 @@ func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 	for _, vmap := range data {
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
 		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
-		res, err = tx.NamedExec(p.sql_query, vmap)
+		res, err = tx.NamedExec(p.sqlQuery, vmap)
 
 		if err != nil {
 			log.Error("Exec err:", err.Error())
@@ -198,18 +198,18 @@ func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 }
 
 func (p *PGPusher) CreateCdrTable() error {
-	// parse the string cdr_fields
-	var str_sql bytes.Buffer
+	// parse the string cdrFields
+	var strSQL bytes.Buffer
 
 	sqlb := PushSQL{Table: p.table_destination}
 	t := template.Must(template.New("sql").Parse(SQL_Create_Table))
 
-	err := t.Execute(&str_sql, sqlb)
+	err := t.Execute(&strSQL, sqlb)
 	if err != nil {
 		return err
 	}
 
-	if _, err := p.db.Exec(str_sql.String()); err != nil {
+	if _, err := p.db.Exec(strSQL.String()); err != nil {
 		return err
 	}
 	return nil

@@ -44,49 +44,49 @@ func externalIP() (string, error) {
 	return "", errors.New("are you connected to the network?")
 }
 
-func get_fields_select(cdr_fields []ParseFields) string {
+func get_fields_select(cdrFields []ParseFields) string {
 	// sqlite init to rowid - move this to conf based on fetcher backend
-	str_fields := "rowid"
-	for _, l := range cdr_fields {
-		if str_fields != "" {
-			str_fields = str_fields + ", "
+	strFields := "rowid"
+	for _, l := range cdrFields {
+		if strFields != "" {
+			strFields = strFields + ", "
 		}
-		str_fields = str_fields + l.OrigField
+		strFields = strFields + l.OrigField
 	}
-	return str_fields
+	return strFields
 }
 
-func build_fieldlist_insert(cdr_fields []ParseFields) (string, map[int]string) {
+func build_fieldlist_insert(cdrFields []ParseFields) (string, map[int]string) {
 	// extradata build a list of map[int]string to store all the index/field
 	// that will be stored in the extra field. ie map[int]string{5: "datetime(answer_stamp)", 6: "datetime(end_stamp)"}
 	var extradata = map[int]string{}
 	extra := false
-	str_fields := "switch, "
-	for i, l := range cdr_fields {
+	strFields := "switch, "
+	for i, l := range cdrFields {
 		if l.DestField == "extradata" {
 			extradata[i] = l.OrigField
 			extra = true
 			continue
 		}
-		str_fields = str_fields + l.DestField
-		str_fields = str_fields + ", "
+		strFields = strFields + l.DestField
+		strFields = strFields + ", "
 	}
 	// Add 1 extra at the end
 	if extra == true {
-		str_fields = str_fields + "extradata"
-		return str_fields, extradata
+		strFields = strFields + "extradata"
+		return strFields, extradata
 	}
 	// Remove last comma
-	fieldsFmt := str_fields[0 : len(str_fields)-2]
+	fieldsFmt := strFields[0 : len(strFields)-2]
 	return fieldsFmt, nil
 }
 
 // function to help building:
 // VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)
-func build_valuelist_insert(cdr_fields []ParseFields) string {
+func build_valuelist_insert(cdrFields []ParseFields) string {
 	list_field := make(map[string]int)
 	values := ":switch, "
-	for _, l := range cdr_fields {
+	for _, l := range cdrFields {
 		if list_field[l.DestField] == 0 {
 			list_field[l.DestField] = 1
 			// values = values + "$" + strconv.Itoa(i) + ", "

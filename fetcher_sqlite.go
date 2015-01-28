@@ -12,35 +12,35 @@ import (
 
 // TODO(areski): move those 2 const to the config file
 
-// CDR_TABLE_NAME is the table that will be used for import
-const CDR_TABLE_NAME = "cdr"
+// CDRTable is the table that will be used for import
+const CDRTable = "cdr"
 
-// CDR_FLAG_FIELD define the field that will be used to mark the imported CDR records
-const CDR_FLAG_FIELD = "flag_imported"
+// CDRFlagField define the field that will be used to mark the imported CDR records
+const CDRFlagField = "flag_imported"
 
 // SQLFetcher is a database sql fetcher for CDRS, records will be retrieved
 // from SQLFetcher and later pushed to the Pusher.
 // SQLFetcher structure keeps tracks DB file, table, results and further data
 // needed to fetch.
 type SQLFetcher struct {
-	db             *sql.DB
-	db_file        string
-	db_table       string
-	max_push_batch int
-	num_fetched    int
-	cdr_fields     []ParseFields
-	results        map[int][]string
-	sql_query      string
-	list_ids       string
+	db           *sql.DB
+	DBFile       string
+	DBTable      string
+	maxPushBatch int
+	numFetched   int
+	cdrFields    []ParseFields
+	results      map[int][]string
+	sqlQuery     string
+	listIDs      string
 }
 
 // FetchSQL is used to build the SQL query to fetch on the Database source
 type FetchSQL struct {
-	List_fields string
-	Table       string
-	Limit       string
-	Clause      string
-	Order       string
+	ListFields string
+	Table      string
+	Limit      string
+	Clause     string
+	Order      string
 }
 
 // UpdateCDR is used to build the SQL query to update the Database source and
@@ -53,21 +53,21 @@ type UpdateCDR struct {
 }
 
 // Init is a constructor for SQLFetcher
-// It will help setting db_file, db_table, max_push_batch and cdr_fields
-func (f *SQLFetcher) Init(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) {
+// It will help setting DBFile, DBTable, maxPushBatch and cdrFields
+func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields) {
 	f.db = nil
-	f.db_file = db_file
-	f.db_table = db_table
-	f.max_push_batch = max_push_batch
-	f.num_fetched = 0
-	f.cdr_fields = cdr_fields
+	f.DBFile = DBFile
+	f.DBTable = DBTable
+	f.maxPushBatch = maxPushBatch
+	f.numFetched = 0
+	f.cdrFields = cdrFields
 	f.results = nil
-	f.sql_query = ""
+	f.sqlQuery = ""
 }
 
-// func NewSQLFetcher(db_file string, db_table string, max_push_batch int, cdr_fields []ParseFields) *SQLFetcher {
+// func NewSQLFetcher(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields) *SQLFetcher {
 // 	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
-// 	return &SQLFetcher{db: db, db_file: db_file, db_table: db_table, sql_query: "", max_push_batch, 0, cdr_fields, nil}
+// 	return &SQLFetcher{db: db, DBFile: DBFile, DBTable: DBTable, sqlQuery: "", maxPushBatch, 0, cdrFields, nil}
 // }
 
 // Connect will connect to the DBMS, here we implemented the connection to SQLite
@@ -83,22 +83,22 @@ func (f *SQLFetcher) Connect() error {
 
 // PrepareQuery method will build the fetching SQL query
 func (f *SQLFetcher) PrepareQuery() error {
-	str_fields := get_fields_select(f.cdr_fields)
-	// parse the string cdr_fields
-	const tsql = "SELECT {{.List_fields}} FROM {{.Table}} {{.Clause}} {{.Order}} {{.Limit}}"
-	var str_sql bytes.Buffer
+	strFields := get_fields_select(f.cdrFields)
+	// parse the string cdrFields
+	const tsql = "SELECT {{.ListFields}} FROM {{.Table}} {{.Clause}} {{.Order}} {{.Limit}}"
+	var strSQL bytes.Buffer
 
-	slimit := fmt.Sprintf("LIMIT %d", f.max_push_batch)
-	clause := "WHERE " + CDR_FLAG_FIELD + "<>1"
-	sqlb := FetchSQL{List_fields: str_fields, Table: "cdr", Limit: slimit, Clause: clause}
+	slimit := fmt.Sprintf("LIMIT %d", f.maxPushBatch)
+	clause := "WHERE " + CDRFlagField + "<>1"
+	sqlb := FetchSQL{ListFields: strFields, Table: "cdr", Limit: slimit, Clause: clause}
 	t := template.Must(template.New("sql").Parse(tsql))
 
-	err := t.Execute(&str_sql, sqlb)
+	err := t.Execute(&strSQL, sqlb)
 	if err != nil {
 		panic(err)
 	}
-	f.sql_query = str_sql.String()
-	log.Debug("SELECT_SQL: ", f.sql_query)
+	f.sqlQuery = strSQL.String()
+	log.Debug("SELECT_SQL: ", f.sqlQuery)
 	return nil
 }
 
@@ -109,11 +109,11 @@ func (f *SQLFetcher) DBClose() error {
 }
 
 // ScanResult method will scan the results and build the 2 propreties
-// 'results' and 'list_ids'.
+// 'results' and 'listIDs'.
 // - 'results' will held a map[int][]string that will contain all records
-// - 'list_ids' will held a list of IDs from the results as a string
+// - 'listIDs' will held a list of IDs from the results as a string
 func (f *SQLFetcher) ScanResult() error {
-	rows, err := f.db.Query(f.sql_query)
+	rows, err := f.db.Query(f.sqlQuery)
 	defer rows.Close()
 	if err != nil {
 		log.Error("Failed to run query", err)
@@ -126,7 +126,7 @@ func (f *SQLFetcher) ScanResult() error {
 	}
 	// Result is your slice string.
 	f.results = make(map[int][]string)
-	list_ids := ""
+	listIDs := ""
 	rawResult := make([][]byte, len(cols))
 	result := make([]string, len(cols))
 
@@ -143,7 +143,7 @@ func (f *SQLFetcher) ScanResult() error {
 		}
 		for i, raw := range rawResult {
 			if i == 0 {
-				list_ids = list_ids + string(raw) + ", "
+				listIDs = listIDs + string(raw) + ", "
 			}
 			if raw == nil {
 				result[i] = "\\N"
@@ -154,8 +154,8 @@ func (f *SQLFetcher) ScanResult() error {
 		}
 		k++
 	}
-	if list_ids != "" {
-		f.list_ids = list_ids[0 : len(list_ids)-2]
+	if listIDs != "" {
+		f.listIDs = listIDs[0 : len(listIDs)-2]
 	}
 	return nil
 }
@@ -163,17 +163,17 @@ func (f *SQLFetcher) ScanResult() error {
 // UpdateCdrTable method is used to mark the record that has been imported
 func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE rowid IN ({{.CDRids}})"
-	var str_sql bytes.Buffer
+	var strSQL bytes.Buffer
 
-	sqlb := UpdateCDR{Table: CDR_TABLE_NAME, Fieldname: CDR_FLAG_FIELD, Status: status, CDRids: f.list_ids}
+	sqlb := UpdateCDR{Table: CDRTable, Fieldname: CDRFlagField, Status: status, CDRids: f.listIDs}
 	t := template.Must(template.New("sql").Parse(tsql))
 
-	err := t.Execute(&str_sql, sqlb)
-	log.Debug("UPDATE TABLE: ", &str_sql)
+	err := t.Execute(&strSQL, sqlb)
+	log.Debug("UPDATE TABLE: ", &strSQL)
 	if err != nil {
 		return err
 	}
-	if _, err := f.db.Exec(str_sql.String()); err != nil {
+	if _, err := f.db.Exec(strSQL.String()); err != nil {
 		return err
 	}
 	return nil
@@ -182,17 +182,17 @@ func (f *SQLFetcher) UpdateCdrTable(status int) error {
 // AddFieldTrackImport method will add a new field to your DB schema to track the import
 func (f *SQLFetcher) AddFieldTrackImport() error {
 	const tsql = "ALTER TABLE {{.Table}} ADD {{.Fieldname}} INTEGER DEFAULT 0"
-	var str_sql bytes.Buffer
+	var strSQL bytes.Buffer
 
-	sqlb := UpdateCDR{Table: CDR_TABLE_NAME, Fieldname: CDR_FLAG_FIELD, Status: 0}
+	sqlb := UpdateCDR{Table: CDRTable, Fieldname: CDRFlagField, Status: 0}
 	t := template.Must(template.New("sql").Parse(tsql))
 
-	err := t.Execute(&str_sql, sqlb)
-	log.Debug("ALTER TABLE: ", &str_sql)
+	err := t.Execute(&strSQL, sqlb)
+	log.Debug("ALTER TABLE: ", &strSQL)
 	if err != nil {
 		return err
 	}
-	if _, err := f.db.Exec(str_sql.String()); err != nil {
+	if _, err := f.db.Exec(strSQL.String()); err != nil {
 		return err
 	}
 	return nil

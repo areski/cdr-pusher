@@ -19,26 +19,26 @@ func TestLoadconfig(t *testing.T) {
 }
 
 func TestParseFields(t *testing.T) {
-	cdr_fields := []ParseFields{
+	cdrFields := []ParseFields{
 		{OrigField: "uuid", DestField: "callid", TypeField: "string"},
 		{OrigField: "caller_id_name", DestField: "caller_id_name", TypeField: "string"},
 	}
-	strfields := get_fields_select(cdr_fields)
+	strfields := get_fields_select(cdrFields)
 	if strfields != "rowid, uuid, caller_id_name" {
 		t.Error("Expected 'rowid, uuid, caller_id_name', got ", strfields)
 	}
 
-	insertf, _ := build_fieldlist_insert(cdr_fields)
+	insertf, _ := build_fieldlist_insert(cdrFields)
 	if insertf != "switch, callid, caller_id_name" {
 		t.Error("Expected 'switch, callid, caller_id_name', got ", insertf)
 	}
 
-	cdr_fields = []ParseFields{
+	cdrFields = []ParseFields{
 		{OrigField: "uuid", DestField: "callid", TypeField: "string"},
 		{OrigField: "customfield", DestField: "extradata", TypeField: "jsonb"},
 	}
 
-	insertf_extra, extradata := build_fieldlist_insert(cdr_fields)
+	insertf_extra, extradata := build_fieldlist_insert(cdrFields)
 	if insertf_extra != "switch, callid, extradata" {
 		t.Error("Expected 'switch, callid, extradata', got ", insertf_extra)
 	}
