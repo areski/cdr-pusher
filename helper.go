@@ -44,7 +44,7 @@ func externalIP() (string, error) {
 	return "", errors.New("are you connected to the network?")
 }
 
-func get_fields_select(cdrFields []ParseFields) string {
+func getFieldSelect(cdrFields []ParseFields) string {
 	// sqlite init to rowid - move this to conf based on fetcher backend
 	strFields := "rowid"
 	for _, l := range cdrFields {
@@ -56,7 +56,7 @@ func get_fields_select(cdrFields []ParseFields) string {
 	return strFields
 }
 
-func build_fieldlist_insert(cdrFields []ParseFields) (string, map[int]string) {
+func getFieldlistInsert(cdrFields []ParseFields) (string, map[int]string) {
 	// extradata build a list of map[int]string to store all the index/field
 	// that will be stored in the extra field. ie map[int]string{5: "datetime(answer_stamp)", 6: "datetime(end_stamp)"}
 	var extradata = map[int]string{}
@@ -83,12 +83,12 @@ func build_fieldlist_insert(cdrFields []ParseFields) (string, map[int]string) {
 
 // function to help building:
 // VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)
-func build_valuelist_insert(cdrFields []ParseFields) string {
-	list_field := make(map[string]int)
+func getValuelistInsert(cdrFields []ParseFields) string {
+	listField := make(map[string]int)
 	values := ":switch, "
 	for _, l := range cdrFields {
-		if list_field[l.DestField] == 0 {
-			list_field[l.DestField] = 1
+		if listField[l.DestField] == 0 {
+			listField[l.DestField] = 1
 			// values = values + "$" + strconv.Itoa(i) + ", "
 			values = values + ":" + l.DestField + ", "
 		}

@@ -23,12 +23,12 @@ func TestParseFields(t *testing.T) {
 		{OrigField: "uuid", DestField: "callid", TypeField: "string"},
 		{OrigField: "caller_id_name", DestField: "caller_id_name", TypeField: "string"},
 	}
-	strfields := get_fields_select(cdrFields)
+	strfields := getFieldSelect(cdrFields)
 	if strfields != "rowid, uuid, caller_id_name" {
 		t.Error("Expected 'rowid, uuid, caller_id_name', got ", strfields)
 	}
 
-	insertf, _ := build_fieldlist_insert(cdrFields)
+	insertf, _ := getFieldlistInsert(cdrFields)
 	if insertf != "switch, callid, caller_id_name" {
 		t.Error("Expected 'switch, callid, caller_id_name', got ", insertf)
 	}
@@ -38,9 +38,9 @@ func TestParseFields(t *testing.T) {
 		{OrigField: "customfield", DestField: "extradata", TypeField: "jsonb"},
 	}
 
-	insertf_extra, extradata := build_fieldlist_insert(cdrFields)
-	if insertf_extra != "switch, callid, extradata" {
-		t.Error("Expected 'switch, callid, extradata', got ", insertf_extra)
+	insertExtra, extradata := getFieldlistInsert(cdrFields)
+	if insertExtra != "switch, callid, extradata" {
+		t.Error("Expected 'switch, callid, extradata', got ", insertExtra)
 	}
 	expectedmap := map[int]string{1: "customfield"}
 	if extradata[1] != expectedmap[1] {

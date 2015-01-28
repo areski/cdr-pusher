@@ -26,11 +26,11 @@ import (
 const WAITTIME = 60
 
 // Fetch CDRs from datasource
-func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+func gofetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	for {
-		log.Debug("gofetcher sending to chan_sync")
-		// TODO: move chan_sync top of f.Fetch and add a loop
-		<-chan_sync
+		log.Debug("gofetcher sending to chanSync")
+		// TODO: move chanSync top of f.Fetch and add a loop
+		<-chanSync
 		f := new(SQLFetcher)
 		if config.StorageDestination == "sqlite" {
 			f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields)
@@ -41,7 +41,7 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 				panic(err)
 			}
 		}
-		chan_res <- f.results
+		chanRes <- f.results
 		// Wait x seconds between each DB fetch | Heartbeat
 		log.Debug("Sleep for " + strconv.Itoa(config.Heartbeat) + " seconds!")
 		time.Sleep(time.Second * time.Duration(config.Heartbeat))
@@ -49,14 +49,14 @@ func gofetcher(config Config, chan_res chan map[int][]string, chan_sync chan boo
 }
 
 // Push CDRs to storage
-func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool) {
+func gopusher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	for {
-		log.Debug("gopusher waiting for chan_sync")
+		log.Debug("gopusher waiting for chanSync")
 		// Send signal to go_fetch to fetch
-		chan_sync <- true
+		chanSync <- true
 		// waiting for CDRs on channel
 		select {
-		case results := <-chan_res:
+		case results := <-chanRes:
 			if config.StorageDestination == "postgres" {
 				// Push CDRs to PostgreSQL
 				p := new(PGPusher)
@@ -73,18 +73,18 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 	}
 }
 
-func run_app() (string, error) {
+func runApp() (string, error) {
 	LoadConfig(defaultConf)
 	if err := ValidateConfig(config); err != nil {
 		panic(err)
 	}
 
-	chan_sync := make(chan bool, 1)
-	chan_res := make(chan map[int][]string, 1)
+	chanSync := make(chan bool, 1)
+	chanRes := make(chan map[int][]string, 1)
 
 	// Start coroutines
-	go gofetcher(config, chan_res, chan_sync)
-	go gopusher(config, chan_res, chan_sync)
+	go gofetcher(config, chanRes, chanSync)
+	go gopusher(config, chanRes, chanSync)
 
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
@@ -134,6 +134,6 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 
 	log.Info("StartTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
-	run_app()
+	runApp()
 	log.Info("StopTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 }

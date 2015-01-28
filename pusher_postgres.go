@@ -32,11 +32,11 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"text/template"
-	// "log"
-	// "time"
 )
 
-var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS {{.Table}} (
+// sqlCreateTable is a SQL template that will create the postgresql table
+// which will hold the imported CDRs
+var sqlCreateTable = `CREATE TABLE IF NOT EXISTS {{.Table}} (
         id serial NOT NULL PRIMARY KEY,
         switch character varying(80) NOT NULL,
         cdr_source_type integer,
@@ -65,9 +65,12 @@ var SQL_Create_Table = `CREATE TABLE IF NOT EXISTS {{.Table}} (
         extradata jsonb
     )`
 
+// PGPusher structure will help us to push CDRs to PostgreSQL.
+// the structure will held properties to connect to the PG DBMS and
+// push the CDRs, such as pgDataSourceName and table_destination
 type PGPusher struct {
 	db                *sqlx.DB
-	pg_datasourcename string
+	pgDataSourceName  string
 	table_destination string
 	cdrFields         []ParseFields
 	switch_ip         string
@@ -75,15 +78,18 @@ type PGPusher struct {
 	sqlQuery          string
 }
 
+// PushSQL will help creating the SQL Insert query to push CDRs
 type PushSQL struct {
 	ListFields string
 	Table      string
 	Values     string
 }
 
-func (p *PGPusher) Init(pg_datasourcename string, cdrFields []ParseFields, switch_ip string, table_destination string) {
+// Init is a constructor for PGPusher
+// It will help setting pgDataSourceName, cdrFields, switch_ip and table_destination
+func (p *PGPusher) Init(pgDataSourceName string, cdrFields []ParseFields, switch_ip string, table_destination string) {
 	p.db = nil
-	p.pg_datasourcename = pg_datasourcename
+	p.pgDataSourceName = pgDataSourceName
 	p.cdrFields = cdrFields
 	if switch_ip == "" {
 		ip, err := externalIP()
@@ -96,10 +102,11 @@ func (p *PGPusher) Init(pg_datasourcename string, cdrFields []ParseFields, switc
 	p.table_destination = table_destination
 }
 
+// Connect will help to connect to the DBMS, here we implemented the connection to SQLite
 func (p *PGPusher) Connect() error {
 	var err error
 	// We are using sqlx in order to take advantage of NamedExec
-	p.db, err = sqlx.Connect("postgres", p.pg_datasourcename)
+	p.db, err = sqlx.Connect("postgres", p.pgDataSourceName)
 	if err != nil {
 		log.Error("Failed to connect", err)
 		return err
@@ -107,9 +114,10 @@ func (p *PGPusher) Connect() error {
 	return nil
 }
 
+// buildInsertQuery method will build the Insert SQL query
 func (p *PGPusher) buildInsertQuery() error {
-	str_fieldlist, _ := build_fieldlist_insert(p.cdrFields)
-	str_valuelist := build_valuelist_insert(p.cdrFields)
+	str_fieldlist, _ := getFieldlistInsert(p.cdrFields)
+	str_valuelist := getValuelistInsert(p.cdrFields)
 
 	const tsql = "INSERT INTO {{.Table}} ({{.ListFields}}) VALUES ({{.Values}})"
 	var strSQL bytes.Buffer
@@ -125,11 +133,13 @@ func (p *PGPusher) buildInsertQuery() error {
 	return nil
 }
 
+// DBClose is helping defering the closing of the DB connector
 func (p *PGPusher) DBClose() error {
 	defer p.db.Close()
 	return nil
 }
 
+// FmtDataExport will reformat the results properly for import
 func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[string]interface{} {
 	data := make(map[int]map[string]interface{})
 	i := 0
@@ -147,7 +157,6 @@ func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[s
 		}
 		jsonExtra, err := json.Marshal(extradata)
 		if err != nil {
-			// TODO: log error
 			log.Error("Error:", err.Error())
 			panic(err)
 		} else {
@@ -158,6 +167,7 @@ func (p *PGPusher) FmtDataExport(fetched_results map[int][]string) map[int]map[s
 	return data
 }
 
+// BatchInsert take care of loop through the fetched_results and push them to PostgreSQL
 func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 	// create the statement string
 	log.WithFields(log.Fields{
@@ -197,12 +207,11 @@ func (p *PGPusher) BatchInsert(fetched_results map[int][]string) error {
 	return nil
 }
 
-func (p *PGPusher) CreateCdrTable() error {
-	// parse the string cdrFields
+// CreateCdrTable take care of creating the table to held the CDRs
+func (p *PGPusher) CreateCDRTable() error {
 	var strSQL bytes.Buffer
-
 	sqlb := PushSQL{Table: p.table_destination}
-	t := template.Must(template.New("sql").Parse(SQL_Create_Table))
+	t := template.Must(template.New("sql").Parse(sqlCreateTable))
 
 	err := t.Execute(&strSQL, sqlb)
 	if err != nil {
@@ -215,6 +224,8 @@ func (p *PGPusher) CreateCdrTable() error {
 	return nil
 }
 
+// PGPusher is the main method that will connect to the DB, create the talbe
+// if it doesn't exist and insert all the records received from the Fetcher
 func (p *PGPusher) Push(fetched_results map[int][]string) error {
 	// Connect to DB
 	err := p.Connect()
@@ -223,7 +234,7 @@ func (p *PGPusher) Push(fetched_results map[int][]string) error {
 	}
 	defer p.db.Close()
 	// Create CDR table for import
-	err = p.CreateCdrTable()
+	err = p.CreateCDRTable()
 	if err != nil {
 		return err
 	}

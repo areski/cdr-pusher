@@ -70,7 +70,7 @@ func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFi
 // 	return &SQLFetcher{db: db, DBFile: DBFile, DBTable: DBTable, sqlQuery: "", maxPushBatch, 0, cdrFields, nil}
 // }
 
-// Connect will connect to the DBMS, here we implemented the connection to SQLite
+// Connect will help to connect to the DBMS, here we implemented the connection to SQLite
 func (f *SQLFetcher) Connect() error {
 	var err error
 	f.db, err = sql.Open("sqlite3", "./sqlitedb/cdr.db")
@@ -83,7 +83,7 @@ func (f *SQLFetcher) Connect() error {
 
 // PrepareQuery method will build the fetching SQL query
 func (f *SQLFetcher) PrepareQuery() error {
-	strFields := get_fields_select(f.cdrFields)
+	strFields := getFieldSelect(f.cdrFields)
 	// parse the string cdrFields
 	const tsql = "SELECT {{.ListFields}} FROM {{.Table}} {{.Clause}} {{.Order}} {{.Limit}}"
 	var strSQL bytes.Buffer
@@ -131,7 +131,7 @@ func (f *SQLFetcher) ScanResult() error {
 	result := make([]string, len(cols))
 
 	dest := make([]interface{}, len(cols)) // A temporary interface{} slice
-	for i, _ := range rawResult {
+	for i := range rawResult {
 		dest[i] = &rawResult[i] // Put pointers to each string in the interface slice
 	}
 	k := 0
