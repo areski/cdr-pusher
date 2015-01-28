@@ -104,7 +104,6 @@ func runApp() (string, error) {
 			return "Service was killed", nil
 		}
 	}
-	return "", nil
 }
 
 func main() {

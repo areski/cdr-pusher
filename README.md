@@ -181,6 +181,8 @@ Some customization can be achieved by editing the config file `fs-pusher.yaml` a
 
 http://go-lint.appspot.com/github.com/areski/fs-pusher
 
+http://goreportcard.com/report/areski/fs-pusher
+
 
 ## License
 
