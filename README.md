@@ -188,6 +188,8 @@ http://goreportcard.com/report/areski/fs-pusher
 
 FS-pusher is licensed under MIT, see `LICENSE` file.
 
+Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
+
 
 ## TODO
 
