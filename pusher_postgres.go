@@ -74,7 +74,7 @@ type PGPusher struct {
 	tableDestination string
 	cdrFields        []ParseFields
 	switchIP         string
-	num_pushed       int
+	countPushed      int
 	sqlQuery         string
 }
 
@@ -116,13 +116,13 @@ func (p *PGPusher) Connect() error {
 
 // buildInsertQuery method will build the Insert SQL query
 func (p *PGPusher) buildInsertQuery() error {
-	str_fieldlist, _ := getFieldlistInsert(p.cdrFields)
-	str_valuelist := getValuelistInsert(p.cdrFields)
+	strFieldlist, _ := getFieldlistInsert(p.cdrFields)
+	strValuelist := getValuelistInsert(p.cdrFields)
 
 	const tsql = "INSERT INTO {{.Table}} ({{.ListFields}}) VALUES ({{.Values}})"
 	var strSQL bytes.Buffer
 
-	sqlb := PushSQL{Table: p.tableDestination, ListFields: str_fieldlist, Values: str_valuelist}
+	sqlb := PushSQL{Table: p.tableDestination, ListFields: strFieldlist, Values: strValuelist}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&strSQL, sqlb)
@@ -207,7 +207,7 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 	return nil
 }
 
-// CreateCdrTable take care of creating the table to held the CDRs
+// CreateCDRTable take care of creating the table to held the CDRs
 func (p *PGPusher) CreateCDRTable() error {
 	var strSQL bytes.Buffer
 	sqlb := PushSQL{Table: p.tableDestination}
@@ -224,7 +224,7 @@ func (p *PGPusher) CreateCDRTable() error {
 	return nil
 }
 
-// PGPusher is the main method that will connect to the DB, create the talbe
+// Push is the main method that will connect to the DB, create the talbe
 // if it doesn't exist and insert all the records received from the Fetcher
 func (p *PGPusher) Push(fetchedResults map[int][]string) error {
 	// Connect to DB
@@ -248,6 +248,6 @@ func (p *PGPusher) Push(fetchedResults map[int][]string) error {
 	if err != nil {
 		return err
 	}
-	log.Debug("Total number pushed:", p.num_pushed)
+	log.Debug("Total number pushed:", p.countPushed)
 	return nil
 }
