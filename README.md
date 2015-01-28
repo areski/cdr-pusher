@@ -175,6 +175,8 @@ FS-pusher is licensed under MIT, see `LICENSE` file.
 - [x] Implement using goroutine with channel to communicate between Fetcher <--> Pusher
 - [x] Add logging
 - [ ] Add test / travis-ci / Badge
+- [ ] Code coverage: http://gocover.io
+- [ ] Code lint: http://go-lint.appspot.com
 - [ ] godoc / https://gowalker.org
 - [ ] Push CDRs to Riak
 - [ ] Deploy with Supervisord
