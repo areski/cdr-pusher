@@ -15,7 +15,7 @@ func second_main() {
 	fmt.Println(ip)
 
 	// LoadConfig
-	LoadConfig(Default_conf)
+	LoadConfig(defaultConf)
 	// log.Debug("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	// ----------------------- RIAK ------------------------
 

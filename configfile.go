@@ -48,17 +48,18 @@ import (
 	"io/ioutil"
 )
 
-// default_conf is the config file for fs-pusher service
-var Default_conf = "./fs-pusher.yaml"
-var Prod_conf = "/etc/fs-pusher.yaml"
+// defaultConf is the config file for fs-pusher service
+var defaultConf = "./fs-pusher.yaml"
+var prodConf = "/etc/fs-pusher.yaml"
 
-// Config held the structure for the configuration file
+// ParseFields held the structure for the configuration file
 type ParseFields struct {
 	Orig_field string
 	Dest_field string
 	Type_field string
 }
 
+// Config held the structure of the config file
 type Config struct {
 	// First letter of variables need to be capital letter
 	Storage_destination string
@@ -100,6 +101,8 @@ func LoadConfig(configfile string) bool {
 	return true
 }
 
+// ValidateConfig will ensure that config file respect some rules for instance
+// have a Storage_source defined and Storage_destination set correctly
 func ValidateConfig(config Config) error {
 	switch config.Storage_source {
 	case "sqlite":

@@ -74,7 +74,7 @@ func gopusher(config Config, chan_res chan map[int][]string, chan_sync chan bool
 }
 
 func run_app() (string, error) {
-	LoadConfig(Default_conf)
+	LoadConfig(defaultConf)
 	if err := ValidateConfig(config); err != nil {
 		panic(err)
 	}
