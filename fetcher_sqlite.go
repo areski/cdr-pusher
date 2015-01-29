@@ -210,7 +210,7 @@ func (f *SQLFetcher) Fetch() error {
 
 	err = f.AddFieldTrackImport()
 	if err != nil {
-		log.Error("Exec err (expected field already exist):", err.Error())
+		log.Warn("Exec err (expected error if the field exist):", err.Error())
 	}
 	// Prepare SQL query
 	err = f.PrepareQuery()
