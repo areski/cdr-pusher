@@ -45,20 +45,20 @@ var config = Config{}
 // LoadConfig load the configuration from the conf file and set the configuration inside the structure config
 // It will returns boolean, true if the yaml config load is successful it will 'panic' otherwise
 func LoadConfig(configfile string) bool {
-	if len(configfile) > 0 {
-		source, err := ioutil.ReadFile(configfile)
-		if err != nil {
-			panic(err)
-		}
-		// decode the yaml source
-		err = yaml.Unmarshal(source, &config)
-		if err != nil {
-			panic(err)
-		}
-	} else {
+	if len(configfile) == 0 {
 		panic("Config file not defined!")
 	}
-	if len(config.StorageDestination) == 0 || len(config.StorageSource) == 0 || len(config.DBFile) == 0 || len(config.DBTable) == 0 {
+	source, err := ioutil.ReadFile(configfile)
+	if err != nil {
+		panic(err)
+	}
+	// decode the yaml source
+	err = yaml.Unmarshal(source, &config)
+	if err != nil {
+		panic(err)
+	}
+	if len(config.StorageDestination) == 0 || len(config.StorageSource) == 0 ||
+		len(config.DBFile) == 0 || len(config.DBTable) == 0 {
 		panic("Settings not properly configured!")
 	}
 	prettyfmt := fmt.Sprintf("Loaded Config:\n%# v", pretty.Formatter(config))
