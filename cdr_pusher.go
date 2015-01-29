@@ -27,31 +27,32 @@ const WAITTIME = 60
 
 // Fetch CDRs from datasource
 func gofetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
-	for {
-		log.Debug("gofetcher sending to chanSync")
-		// TODO: move chanSync top of f.Fetch and add a loop
-		<-chanSync
-		f := new(SQLFetcher)
-		if config.StorageDestination == "sqlite" {
-			f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields)
+	f := new(SQLFetcher)
+	if config.StorageSource == "sqlite" {
+		f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields)
+		for {
+			log.Debug("gofetcher waiting on chanSync before fetching")
+			<-chanSync
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
 			if err != nil {
 				log.Error(err.Error())
 				panic(err)
 			}
+			if f.results != nil {
+				chanRes <- f.results
+			}
+			// Wait x seconds between each DB fetch | Heartbeat
+			log.Debug("Sleep for " + strconv.Itoa(config.Heartbeat) + " seconds!")
+			time.Sleep(time.Second * time.Duration(config.Heartbeat))
 		}
-		chanRes <- f.results
-		// Wait x seconds between each DB fetch | Heartbeat
-		log.Debug("Sleep for " + strconv.Itoa(config.Heartbeat) + " seconds!")
-		time.Sleep(time.Second * time.Duration(config.Heartbeat))
 	}
 }
 
 // Push CDRs to storage
 func gopusher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	for {
-		log.Debug("gopusher waiting for chanSync")
+		log.Debug("gopusher sending chanSync to start Fetching")
 		// Send signal to go_fetch to fetch
 		chanSync <- true
 		// waiting for CDRs on channel

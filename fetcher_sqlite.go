@@ -227,6 +227,6 @@ func (f *SQLFetcher) Fetch() error {
 	if err != nil {
 		return err
 	}
-	log.Debug("RESULT:\n%#v\n", f.results)
+	log.Debug("RESULT:", f.results)
 	return nil
 }
