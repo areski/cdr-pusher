@@ -140,7 +140,7 @@ func (p *PGPusher) DBClose() error {
 }
 
 // FmtDataExport will reformat the results properly for import
-func (p *PGPusher) FmtDataExport(fetchedResults map[int][]string) map[int]map[string]interface{} {
+func (p *PGPusher) FmtDataExport(fetchedResults map[int][]string) (map[int]map[string]interface{}, error) {
 	data := make(map[int]map[string]interface{})
 	i := 0
 	for _, v := range fetchedResults {
@@ -158,13 +158,13 @@ func (p *PGPusher) FmtDataExport(fetchedResults map[int][]string) map[int]map[st
 		jsonExtra, err := json.Marshal(extradata)
 		if err != nil {
 			log.Error("Error:", err.Error())
-			panic(err)
+			return nil, err
 		} else {
 			data[i]["extradata"] = string(jsonExtra)
 		}
 		i = i + 1
 	}
-	return data
+	return data, nil
 }
 
 // BatchInsert take care of loop through the fetchedResults and push them to PostgreSQL
@@ -181,28 +181,30 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 	tx := p.db.MustBegin()
 	if err != nil {
 		log.Error("Error:", err.Error())
-		panic(err)
+		return err
 	}
-	data := p.FmtDataExport(fetchedResults)
+	data, err := p.FmtDataExport(fetchedResults)
+	if err != nil {
+		return err
+	}
 	var res sql.Result
 	for _, vmap := range data {
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
 		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
 		res, err = tx.NamedExec(p.sqlQuery, vmap)
-
 		if err != nil {
 			log.Error("Exec err:", err.Error())
-		} else {
-			num, err := res.RowsAffected()
-			if err != nil {
-				log.Debug("RowsAffected:", num)
-			}
+			continue
+		}
+		num, err := res.RowsAffected()
+		if err != nil {
+			log.Debug("RowsAffected:", num)
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
 		log.Error("Error:", err.Error())
-		panic(err)
+		return err
 	}
 	return nil
 }
