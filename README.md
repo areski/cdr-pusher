@@ -196,10 +196,11 @@ Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
 - [x] Fetch & Push CDRs to Postgresql
 - [x] Implement using goroutine with channel to communicate between Fetcher <--> Pusher
 - [x] Add logging
-- [ ] Add test / travis-ci / Badge
-- [ ] Code coverage: http://gocover.io
-- [ ] Code lint: http://go-lint.appspot.com
-- [ ] godoc / https://gowalker.org
+- [x] Add test / circle-ci / Badge
+- [x] Code lint: http://go-lint.appspot.com
+- [x] godoc / https://gowalker.org
+- [x] Code coverage: http://gocover.io
+- [ ] Improve Code coverage
 - [ ] Push CDRs to Riak
 - [ ] Deploy with Supervisord
 - [ ] Review install / deployment documentation
