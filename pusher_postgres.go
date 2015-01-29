@@ -32,6 +32,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"text/template"
+	"time"
 )
 
 // sqlCreateTable is a SQL template that will create the postgresql table
@@ -112,6 +113,25 @@ func (p *PGPusher) Connect() error {
 		return err
 	}
 	return nil
+}
+
+// ForceConnect will help to Reconnect to the DBMS
+func (p *PGPusher) ForceConnect() error {
+	for {
+		err := p.Connect()
+		if err != nil {
+			log.Error("Error connecting to DB...", err)
+			time.Sleep(time.Second * time.Duration(5))
+			continue
+		}
+		err = p.db.Ping()
+		if err != nil {
+			log.Error("Error pinging to DB...", err)
+			time.Sleep(time.Second * time.Duration(5))
+			continue
+		}
+		return nil
+	}
 }
 
 // buildInsertQuery method will build the Insert SQL query
@@ -230,7 +250,7 @@ func (p *PGPusher) CreateCDRTable() error {
 // if it doesn't exist and insert all the records received from the Fetcher
 func (p *PGPusher) Push(fetchedResults map[int][]string) error {
 	// Connect to DB
-	err := p.Connect()
+	err := p.ForceConnect()
 	if err != nil {
 		return err
 	}

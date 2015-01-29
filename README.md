@@ -200,7 +200,8 @@ Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
 - [x] Code lint: http://go-lint.appspot.com
 - [x] godoc / https://gowalker.org
 - [x] Code coverage: http://gocover.io
-- [ ] Improve Code coverage
+- [x] Improve Code coverage
+- [x] Add check for PG connection in goroutine (connect error + Ping)
 - [ ] Push CDRs to Riak
 - [ ] Deploy with Supervisord
 - [ ] Review install / deployment documentation

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -17,14 +16,14 @@ func TestPush(t *testing.T) {
 	p.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.TableDestination)
 
 	err := p.Connect()
-	// if err == nil {
-	// 	t.Error("Expected error to connect to PostgreSQL")
-	// }
-
-	err = p.CreateCDRTable()
 	if err != nil {
-		t.Error("Not expected error, got ", err.Error())
+		t.Error("Expected error to connect to PostgreSQL")
 	}
+
+	// err = p.CreateCDRTable()
+	// if err != nil {
+	// 	t.Error("Not expected error, got ", err.Error())
+	// }
 
 	err = p.buildInsertQuery()
 	if err != nil {
@@ -33,18 +32,16 @@ func TestPush(t *testing.T) {
 
 	fetchedResults := make(map[int][]string)
 	fetchedResults[1] = []string{"myid", "callid", "callerIDname", "string4", "string5"}
-	fmt.Println(fetchedResults)
 
 	fmtres, _ := p.FmtDataExport(fetchedResults)
-	fmt.Println(fmtres)
 	if fmtres == nil {
 		t.Error("Expected result, got ", fmtres)
 	}
 
-	err = p.BatchInsert(fetchedResults)
-	if err == nil {
-		t.Error("Not expected error, got ", err.Error())
-	}
+	// err = p.BatchInsert(fetchedResults)
+	// if err == nil {
+	// 	t.Error("Not expected error, got ", err.Error())
+	// }
 
 	// results := make(map[int][]string)
 	// err := p.Push(results)
