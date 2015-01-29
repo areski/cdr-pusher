@@ -4,7 +4,7 @@ storage_destination: "postgres"
 
 # Used when storage_dest_type = postgres
 # datasourcename: connect string to connect to PostgreSQL used by sql.Open
-pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbname=fs-pusher sslmode=disable"
+pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbname=cdr-pusher sslmode=disable"
 
 # Used when storage_dest_type = postgres
 # pg_store_table: the DB table name to store CDRs in Postgres

@@ -1,15 +1,15 @@
-# FS-Pusher
+# CDR-Pusher
 
-FS-Pusher is a Go Application that will push your stored CDRs (Call Detail
+CDR-Pusher is a Go Application that will push your stored CDRs (Call Detail
 Record) from your local storage (See list of supported storage) to a distant
 PostGreSQL or Riak Cluster.
 
 This can be used to centralize your CDRs or simply to safely backup them in
 realtime. Software, like CDR-Stats, can then be used to provide CDR reporting.
 
-[![circleci](https://circleci.com/gh/areski/fs-pusher.png)](https://circleci.com/gh/areski/fs-pusher)
+[![circleci](https://circleci.com/gh/areski/cdr-pusher.png)](https://circleci.com/gh/areski/cdr-pusher)
 
-[![Go Walker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/areski/fs-pusher)
+[![Go Walker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/areski/cdr-pusher)
 
 
 ## Roadmap
@@ -29,40 +29,40 @@ Next we would like to implement:
 
 ## Install / Run
 
-The config file need to be installed at the following location /etc/fs-pusher.yaml
+The config file need to be installed at the following location /etc/cdr-pusher.yaml
 
-To install and run the fs-pusher application, follow those steps:
+To install and run the cdr-pusher application, follow those steps:
 
-    $ git clone https://github.com/areski/fs-pusher.git
-    $ cd fs-pusher
+    $ git clone https://github.com/areski/cdr-pusher.git
+    $ cd cdr-pusher
     $ export GOPATH=`pwd`
     $ make build
-    $ ./bin/fs-pusher
+    $ ./bin/cdr-pusher
 
 
 ## Testing
 
 To run the tests, follow this step:
 
-    $ cd fs-pusher
+    $ cd cdr-pusher
     $ go test .
 
 
 ## Test Coverage
 
-Visit gocover for the test coverage: http://gocover.io/github.com/areski/fs-pusher
+Visit gocover for the test coverage: http://gocover.io/github.com/areski/cdr-pusher
 
 
 ## Configuration file
 
-Config file `/etc/fs-pusher.yaml`:
+Config file `/etc/cdr-pusher.yaml`:
 
     # storage_dest_type: accepted value "postgres" or "riak"
     storage_destination: "postgres"
 
     # Used when storage_dest_type = postgres
     # datasourcename: connect string to connect to PostgreSQL used by sql.Open
-    pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbname=fs-pusher sslmode=disable"
+    pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbname=cdr-pusher sslmode=disable"
 
     # Used when storage_dest_type = postgres
     # pg_store_table: the DB table name to store CDRs in Postgres
@@ -149,11 +149,11 @@ This won’t work if you do not have root access, then make sure a `.conf.d` run
 
     mkdir /etc/supervisord.conf.d
 
-### Configure FS-Pusher with Supervisord
+### Configure CDR-Pusher with Supervisord
 
-Copy Supervisor conf file for fs-pusher:
+Copy Supervisor conf file for cdr-pusher:
 
-    cp ./supervisord/fs-pusher-prog.conf /etc/supervisord.conf.d/
+    cp ./supervisord/cdr-pusher-prog.conf /etc/supervisord.conf.d/
 
 ### Supervisord Manage
 
@@ -170,23 +170,23 @@ Supervisord provides 2 commands, supervisord and supervisorctl:
 
 ## Configure FreeSWITCH
 
-A shell script is provided to install FreeSWITCH on Debian 7.x: https://github.com/areski/fs-pusher/blob/master/install/install-freeswitch.sh
+A shell script is provided to install FreeSWITCH on Debian 7.x: https://github.com/areski/cdr-pusher/blob/master/install/install-freeswitch.sh
 
-FreeSWITCH mod_cdr_sqlite is used to store locally the CDRs prior being fetch and send by fs_pusher: https://wiki.freeswitch.org/wiki/Mod_cdr_sqlite
+FreeSWITCH mod_cdr_sqlite is used to store locally the CDRs prior being fetch and send by cdr_pusher: https://wiki.freeswitch.org/wiki/Mod_cdr_sqlite
 
-Some customization can be achieved by editing the config file `fs-pusher.yaml` and the config file for Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to send specific fields in your CDRs, you will need to change both conf files to ensure that the data is stored in SQLite and that Fs-pusher fetch and send this new data.
+Some customization can be achieved by editing the config file `cdr-pusher.yaml` and by tweaking the config of Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to send specific fields in your CDRs, you will need to change both configuration files and ensure that the custom field are properly stored in SQLite, then CDR-Pusher offer enough flexibility to push any custom field.
 
 
 ## GoLint
 
-http://go-lint.appspot.com/github.com/areski/fs-pusher
+http://go-lint.appspot.com/github.com/areski/cdr-pusher
 
-http://goreportcard.com/report/areski/fs-pusher
+http://goreportcard.com/report/areski/cdr-pusher
 
 
 ## License
 
-FS-pusher is licensed under MIT, see `LICENSE` file.
+CDR-Pusher is licensed under MIT, see `LICENSE` file.
 
 Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
 

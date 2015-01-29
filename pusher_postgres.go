@@ -5,17 +5,17 @@ package main
 // To create the database:
 //
 //   sudo -u postgres createuser USER --no-superuser --no-createrole --no-createdb
-//   sudo -u postgres createdb fs-pusher --owner USER
+//   sudo -u postgres createdb cdr-pusher --owner USER
 //
 // Note: substitute "USER" by your user name.
 //
 // To remove it:
 //
-//   sudo -u postgres dropdb fs-pusher
+//   sudo -u postgres dropdb cdr-pusher
 //
 // to create the table to store the CDRs:
 //
-// $ psql fs-pusher
+// $ psql cdr-pusher
 // testdb=#
 // CREATE TABLE cdr_import
 //     (id int, call_uuid text, dst text, callerid_name text, callerid_num text, duration int,

@@ -1,4 +1,4 @@
-BINARY = ./bin/fs-pusher
+BINARY = ./bin/cdr-pusher
 
 install-daemon:
 	go install ./...
@@ -21,4 +21,4 @@ get:
 
 build: get
 	@mkdir -p bin
-	@go build -a -o bin/fs-pusher .
+	@go build -a -o bin/cdr-pusher .

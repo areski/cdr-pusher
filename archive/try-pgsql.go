@@ -11,7 +11,7 @@ import (
 func main() {
 
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s user=%s dbname='%s' password=%s port=%s sslmode=disable",
-		"localhost", "postgres", "fs-pusher", "password", "5433"))
+		"localhost", "postgres", "cdr-pusher", "password", "5433"))
 	if err != nil {
 		panic(err)
 	}

@@ -117,7 +117,7 @@ func main() {
 	setlogfile := false
 	if setlogfile {
 		// backendlog := logging.NewLogBackend(os.Stderr, "", 0)
-		f, err := os.OpenFile("fs-pusher.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		f, err := os.OpenFile("cdr-pusher.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			panic(err.Error())
 		}

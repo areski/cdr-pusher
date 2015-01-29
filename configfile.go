@@ -13,9 +13,9 @@ import (
 	"io/ioutil"
 )
 
-// defaultConf is the config file for fs-pusher service
-var defaultConf = "./fs-pusher.yaml"
-var prodConf = "/etc/fs-pusher.yaml"
+// defaultConf is the config file for cdr-pusher service
+var defaultConf = "./cdr-pusher.yaml"
+var prodConf = "/etc/cdr-pusher.yaml"
 
 // ParseFields held the structure for the configuration file
 type ParseFields struct {

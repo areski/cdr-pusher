@@ -6,14 +6,14 @@
 
 #
 # To download and run the script on your server :
-# cd /usr/src/ ; rm install-freeswitch.sh ; wget --no-check-certificate https://raw.github.com/areski/fs-pusher/master/install/install-freeswitch.sh ; chmod +x install-freeswitch.sh ; ./install-freeswitch.sh
+# cd /usr/src/ ; rm install-freeswitch.sh ; wget --no-check-certificate https://raw.github.com/areski/cdr-pusher/master/install/install-freeswitch.sh ; chmod +x install-freeswitch.sh ; ./install-freeswitch.sh
 #
 
 #Install from Deb/Yum Packages or via Sources - (value: SOURCES / PACKAGES)
 INSTALL_TYPE="PACKAGES"
 
-FS_CONF_PATH=https://raw.github.com/areski/fs-pusher/master/install/freeswitch-conf
-FS_INIT_PATH=https://raw.github.com/areski/fs-pusher/master/install/freeswitch-init
+FS_CONF_PATH=https://raw.github.com/areski/cdr-pusher/master/install/freeswitch-conf
+FS_INIT_PATH=https://raw.github.com/areski/cdr-pusher/master/install/freeswitch-init
 FS_CONFIG_PATH=/etc/freeswitch
 FS_BASE_PATH=/usr/src/
 CURRENT_PATH=$PWD
