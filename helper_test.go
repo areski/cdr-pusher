@@ -50,3 +50,10 @@ func TestGetValuelistInsert(t *testing.T) {
 		t.Error("Expected ':switch, :callid, :caller_id_name', got ", valuesf)
 	}
 }
+
+func TestExternalIP(t *testing.T) {
+	localip, _ := externalIP()
+	if localip == "" {
+		t.Error("Expected an IP Address, got ", localip)
+	}
+}
