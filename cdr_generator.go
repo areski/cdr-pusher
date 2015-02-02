@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	"github.com/manveru/faker"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nu7hatch/gouuid"
-	"log"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -34,25 +34,12 @@ func (c CDRgorm) TableName() string {
 	return "cdr"
 }
 
-func connectSqliteDB() gorm.DB {
-	db, err := gorm.Open("sqlite3", "../sqlitedb/cdr.db")
+func connectSqliteDB(sqliteDBpath string) gorm.DB {
+	db, err := gorm.Open("sqlite3", sqliteDBpath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return db
-}
-
-func fetchCdrSqliteGorm() {
-	db := connectSqliteDB()
-	// var cdrs []CDRgorm
-	var cdrs []map[string]interface{}
-
-	db.Raw("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT ?", 10).Scan(cdrs)
-
-	// db.Limit(10).Find(&cdrs)
-	// fmt.Printf("%s - %v\n", query, cdrs)
-	fmt.Println(cdrs)
-	fmt.Println("-------------------------------")
 }
 
 func random(min, max int) int {
@@ -60,34 +47,31 @@ func random(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
-func main() {
+// GenerateCDR creates a certain amount of CDRs to a given SQLite database
+func GenerateCDR(sqliteDBpath string, amount int) error {
+	log.Debug("!!! We will populate " + sqliteDBpath + " with " + strconv.Itoa(amount) + " CDRs !!!")
 	fake, _ := faker.New("en")
-	db := connectSqliteDB()
-	db.DB().Ping()
-	db.LogMode(true)
-
-	var cdrs []CDRgorm
-	// var cdrs []map[string]interface{}
-
-	// db.Raw("SELECT rowid, caller_id_name, destination_number FROM cdr LIMIT ?", 10).Scan(cdrs)
-
-	db.Limit(10).Find(&cdrs)
-	// fmt.Printf("%s - %v\n", query, cdrs)
-	fmt.Println(cdrs)
-	fmt.Println("-------------------------------")
+	db := connectSqliteDB(sqliteDBpath)
+	db.DB().SetMaxIdleConns(10)
+	db.DB().SetMaxOpenConns(100)
+	// db.DB().Ping()
+	// db.LogMode(true)
+	uuid4, _ := uuid.NewV4()
+	cidname := fake.Name()
+	cidnum := fake.PhoneNumber()
+	dstnum := fake.CellPhoneNumber()
+	duration := random(30, 300)
+	billsec := duration - 10
 	var listcdr = []CDRgorm{}
-	var cdr CDRgorm
-	for i := 0; i < 2; i++ {
-		uuid4, _ := uuid.NewV4()
-		cdr = CDRgorm{CallerIDName: fake.Name(), CallerIDNumber: fake.PhoneNumber(),
-			DestinationNumber: fake.CellPhoneNumber(), UUID: uuid4.String(),
-			Duration: random(30, 300), Billsec: random(30, 300),
+
+	for i := 0; i < amount; i++ {
+		log.Debug(i)
+		cdr := CDRgorm{CallerIDName: cidname, CallerIDNumber: cidnum,
+			DestinationNumber: dstnum, UUID: uuid4.String(),
+			Duration: duration, Billsec: billsec,
 			StartStamp: time.Now(), AnswerStamp: time.Now(), EndStamp: time.Now()}
 		listcdr = append(listcdr, cdr)
 	}
-
-	fmt.Println("listcdr:\n%# v\n\n", listcdr)
-	fmt.Println(db.NewRecord(cdr))
-	db.Create(listcdr)
-	fmt.Println(db.NewRecord(cdr))
+	db.Create(&listcdr)
+	return nil
 }

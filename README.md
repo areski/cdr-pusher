@@ -125,6 +125,9 @@ Config file `/etc/cdr-pusher.yaml`:
     # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
     switch_ip: ""
 
+  # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
+  fake_cdr: "yes"
+
 
 ## Deployment
 

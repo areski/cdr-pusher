@@ -65,12 +65,28 @@ func gopusher(config Config, chanRes chan map[int][]string, chanSync chan bool) 
 				err := p.Push(results)
 				if err != nil {
 					log.Error(err.Error())
-					panic(err)
+					continue
 				}
 			}
 		case <-time.After(time.Second * WAITTIME):
 			log.Debug("Nothing received yet...")
 		}
+	}
+}
+
+// goCreateFakeCDRs is created for tests purpose, it will populate the SQlite database
+// with fake CDRs at certain interval of time
+func goPopulateFakeCDRs(config Config) error {
+	if config.FakeCDR != "yes" {
+		return nil
+	}
+	intval_time := 1
+	amount_cdr := 100
+	for {
+		// Wait x seconds when inserting fake CDRs
+		log.Debug("Sleep for " + strconv.Itoa(intval_time) + " seconds!")
+		time.Sleep(time.Second * time.Duration(intval_time))
+		GenerateCDR(config.DBFile, amount_cdr)
 	}
 }
 
@@ -86,6 +102,7 @@ func runApp() (string, error) {
 	// Start coroutines
 	go gofetcher(config, chanRes, chanSync)
 	go gopusher(config, chanRes, chanSync)
+	go goPopulateFakeCDRs(config)
 
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
