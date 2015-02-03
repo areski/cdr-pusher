@@ -1,13 +1,13 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"fmt"
 	"github.com/astaxie/beego/orm"
 	"github.com/manveru/faker"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nu7hatch/gouuid"
+	// "log"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -33,15 +33,9 @@ func (c *CDR) TableName() string {
 	return "cdr"
 }
 
-// func connectSqliteDB(sqliteDBpath string) {
-// 	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
-// 	orm.RegisterDataBase("default", "sqlite3", sqliteDBpath)
-// 	orm.RegisterModel(new(CDR))
-// }
-
 func init() {
 	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
-	orm.RegisterDataBase("default", "sqlite3", "./sqlitedb/cdr.db")
+	orm.RegisterDataBase("default", "sqlite3", "../sqlitedb/cdr.db")
 	orm.RegisterModel(new(CDR))
 }
 
@@ -50,33 +44,26 @@ func random(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
-// GenerateCDR creates a certain amount of CDRs to a given SQLite database
-func GenerateCDR(sqliteDBpath string, amount int) error {
-	log.Debug("!!! We will populate " + sqliteDBpath + " with " + strconv.Itoa(amount) + " CDRs !!!")
+func main() {
 	fake, _ := faker.New("en")
 
-	// connectSqliteDB(sqliteDBpath)
 	o := orm.NewOrm()
-	// orm.Debug = true
 	o.Using("default")
 
-	uuid4, _ := uuid.NewV4()
-	cidname := fake.Name()
-	cidnum := fake.PhoneNumber()
-	dstnum := fake.CellPhoneNumber()
-	duration := random(30, 300)
-	billsec := duration - 10
+	fmt.Println("-------------------------------")
 	var listcdr = []CDR{}
-
-	for i := 0; i < amount; i++ {
-		cdr := CDR{CallerIDName: cidname, CallerIDNumber: cidnum,
-			DestinationNumber: dstnum, UUID: uuid4.String(),
-			Duration: duration, Billsec: billsec,
+	var cdr CDR
+	for i := 0; i < 100; i++ {
+		uuid4, _ := uuid.NewV4()
+		cdr = CDR{CallerIDName: fake.Name(), CallerIDNumber: fake.PhoneNumber(),
+			DestinationNumber: fake.CellPhoneNumber(), UUID: uuid4.String(),
+			Duration: random(30, 300), Billsec: random(30, 300),
 			StartStamp: time.Now(), AnswerStamp: time.Now(), EndStamp: time.Now()}
 		listcdr = append(listcdr, cdr)
 	}
 
 	successNums, err := o.InsertMulti(50, listcdr)
-	log.Debug("ID: %d, ERR: %v\n", successNums, err)
-	return nil
+	fmt.Printf("ID: %d, ERR: %v\n", successNums, err)
+
+	// fmt.Println("listcdr:\n%# v\n\n", listcdr)
 }

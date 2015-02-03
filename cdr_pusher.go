@@ -81,7 +81,7 @@ func goPopulateFakeCDRs(config Config) error {
 		return nil
 	}
 	intval_time := 1
-	amount_cdr := 100
+	amount_cdr := 1000
 	for {
 		// Wait x seconds when inserting fake CDRs
 		log.Debug("Sleep for " + strconv.Itoa(intval_time) + " seconds!")
@@ -102,7 +102,7 @@ func runApp() (string, error) {
 	// Start coroutines
 	go gofetcher(config, chanRes, chanSync)
 	go gopusher(config, chanRes, chanSync)
-	go goPopulateFakeCDRs(config)
+	// go goPopulateFakeCDRs(config)
 
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
