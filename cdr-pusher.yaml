@@ -26,10 +26,10 @@ db_file: "./sqlitedb/cdr.db"
 db_table: "cdr"
 
 # heartbeat: Frequence of check for new CDRs in seconds
-heartbeat: 5
+heartbeat: 1
 
 # max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
-max_push_batch: 200
+max_push_batch: 1000
 
 # NOTE: cdr_fields is not implemented (See TODO)
 
@@ -70,4 +70,8 @@ cdr_fields:
 switch_ip: ""
 
 # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
-fake_cdr: "yes"
+fake_cdr: "no"
+
+# fake_amount_cdr is the amount of CDRs to generate into the SQLite database for test purpose (value: 1-1000)
+# this amount of CDRs will be created every second
+fake_amount_cdr: 1000

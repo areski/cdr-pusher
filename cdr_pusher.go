@@ -43,7 +43,7 @@ func gofetcher(config Config, chanRes chan map[int][]string, chanSync chan bool)
 				chanRes <- f.results
 			}
 			// Wait x seconds between each DB fetch | Heartbeat
-			log.Debug("Sleep for " + strconv.Itoa(config.Heartbeat) + " seconds!")
+			log.Info("gofetcher sleeps for " + strconv.Itoa(config.Heartbeat) + " seconds!")
 			time.Sleep(time.Second * time.Duration(config.Heartbeat))
 		}
 	}
@@ -80,13 +80,13 @@ func goPopulateFakeCDRs(config Config) error {
 	if config.FakeCDR != "yes" {
 		return nil
 	}
+	// Heartbeat time for goPopulateFakeCDRs
 	intval_time := 1
-	amount_cdr := 1000
 	for {
 		// Wait x seconds when inserting fake CDRs
-		log.Debug("Sleep for " + strconv.Itoa(intval_time) + " seconds!")
+		log.Info("goPopulateFakeCDRs sleeps for " + strconv.Itoa(intval_time) + " seconds!")
 		time.Sleep(time.Second * time.Duration(intval_time))
-		GenerateCDR(config.DBFile, amount_cdr)
+		GenerateCDR(config.DBFile, config.FakeAmountCDR)
 	}
 }
 
@@ -99,10 +99,10 @@ func runApp() (string, error) {
 	chanSync := make(chan bool, 1)
 	chanRes := make(chan map[int][]string, 1)
 
-	// Start coroutines
+	// Start the coroutines
 	go gofetcher(config, chanRes, chanSync)
 	go gopusher(config, chanRes, chanSync)
-	// go goPopulateFakeCDRs(config)
+	go goPopulateFakeCDRs(config)
 
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
@@ -148,7 +148,8 @@ func main() {
 
 	// Only log the warning severity or above.
 	// log.SetLevel(log.WarnLevel)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
+	// log.SetLevel(log.DebugLevel)
 
 	log.Info("StartTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 	runApp()

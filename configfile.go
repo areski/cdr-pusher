@@ -39,6 +39,7 @@ type Config struct {
 	CDRFields          []ParseFields "cdr_fields"
 	SwitchIP           string        "switch_ip"
 	FakeCDR            string        "fake_cdr"
+	FakeAmountCDR      int           "fake_amount_cdr"
 }
 
 var config = Config{}

@@ -113,6 +113,8 @@ func (f *SQLFetcher) DBClose() error {
 // - 'results' will held a map[int][]string that will contain all records
 // - 'listIDs' will held a list of IDs from the results as a string
 func (f *SQLFetcher) ScanResult() error {
+	// Init numFetched to 0
+	f.numFetched = 0
 	rows, err := f.db.Query(f.sqlQuery)
 	defer rows.Close()
 	if err != nil {
@@ -154,6 +156,9 @@ func (f *SQLFetcher) ScanResult() error {
 		}
 		k++
 	}
+	f.numFetched = k
+	log.Info("Total fetched from Sqlite: ", f.numFetched)
+	// Remove last ', ' from listIDs
 	if listIDs != "" {
 		f.listIDs = listIDs[0 : len(listIDs)-2]
 	}
@@ -210,7 +215,7 @@ func (f *SQLFetcher) Fetch() error {
 
 	err = f.AddFieldTrackImport()
 	if err != nil {
-		log.Warn("Exec err (expected error if the field exist):", err.Error())
+		log.Debug("Exec err (expected error if the field exist):", err.Error())
 	}
 	// Prepare SQL query
 	err = f.PrepareQuery()

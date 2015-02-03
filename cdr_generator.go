@@ -77,6 +77,10 @@ func GenerateCDR(sqliteDBpath string, amount int) error {
 	}
 
 	successNums, err := o.InsertMulti(50, listcdr)
-	log.Debug("ID: %d, ERR: %v\n", successNums, err)
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	log.Info("Successnums inserted: ", successNums)
 	return nil
 }
