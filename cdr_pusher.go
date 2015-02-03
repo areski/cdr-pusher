@@ -29,7 +29,7 @@ const WAITTIME = 60
 func gofetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	f := new(SQLFetcher)
 	if config.StorageSource == "sqlite" {
-		f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields)
+		f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields, config.DBFlagField)
 		for {
 			log.Debug("gofetcher waiting on chanSync before fetching")
 			<-chanSync

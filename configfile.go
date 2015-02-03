@@ -34,6 +34,7 @@ type Config struct {
 	StorageSource      string        "storage_source"
 	DBFile             string        "db_file"
 	DBTable            string        "db_table"
+	DBFlagField        string        "db_flag_field"
 	Heartbeat          int           "heartbeat"
 	MaxPushBatch       int           "max_push_batch"
 	CDRFields          []ParseFields "cdr_fields"

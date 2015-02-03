@@ -76,22 +76,22 @@ Config file `/etc/cdr-pusher.yaml`:
     storage_source: "sqlite"
 
     # db_file: specify the database path and name
-    db_file: "/usr/local/freeswitch/cdr.db"
+    # db_file: "/usr/local/freeswitch/cdr.db"
+    db_file: "./sqlitedb/cdr.db"
 
     # db_table: the DB table name
     db_table: "cdr"
 
+    # db_flag_field defines the table field that will be added/used to track the import
+    db_flag_field: "flag_imported"
+
     # heartbeat: Frequence of check for new CDRs in seconds
-    heartbeat: 5
+    heartbeat: 1
 
     # max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
-    max_push_batch: 200
+    max_push_batch: 1000
 
-    # NOTE: cdr_fields is not implemented (See TODO)
-
-    # cdr_fields: list of fields with type to transit - format is "original_field:destination_field:type, ..."
-    # ${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}
-
+    # cdr_fields is list of fields that will be fetched (from SQLite3) and pushed (to PostgreSQL)
     cdr_fields:
         - orig_field: uuid
           dest_field: callid
@@ -114,7 +114,6 @@ Config file `/etc/cdr-pusher.yaml`:
         - orig_field: "datetime(start_stamp)"
           dest_field: starting_date
           type_field: date
-        # - orig_field: "strftime('%s', answer_stamp)" # convert to epoch
         - orig_field: "datetime(answer_stamp)"
           dest_field: extradata
           type_field: jsonb
@@ -125,8 +124,12 @@ Config file `/etc/cdr-pusher.yaml`:
     # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
     switch_ip: ""
 
-  # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
-  fake_cdr: "yes"
+    # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
+    fake_cdr: "no"
+
+    # fake_amount_cdr is the amount of CDRs to generate into the SQLite database for test purpose (value: 1-1000)
+    # this amount of CDRs will be created every second
+    fake_amount_cdr: 1000
 
 
 ## Deployment

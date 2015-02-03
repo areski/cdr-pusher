@@ -10,14 +10,6 @@ import (
 	"text/template"
 )
 
-// TODO(areski): move those 2 const to the config file
-
-// CDRTable is the table that will be used for import
-const CDRTable = "cdr"
-
-// CDRFlagField define the field that will be used to mark the imported CDR records
-const CDRFlagField = "flag_imported"
-
 // SQLFetcher is a database sql fetcher for CDRS, records will be retrieved
 // from SQLFetcher and later pushed to the Pusher.
 // SQLFetcher structure keeps tracks DB file, table, results and further data
@@ -26,6 +18,7 @@ type SQLFetcher struct {
 	db           *sql.DB
 	DBFile       string
 	DBTable      string
+	DBFlagField  string
 	maxPushBatch int
 	numFetched   int
 	cdrFields    []ParseFields
@@ -54,7 +47,8 @@ type UpdateCDR struct {
 
 // Init is a constructor for SQLFetcher
 // It will help setting DBFile, DBTable, maxPushBatch and cdrFields
-func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields) {
+func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields,
+	DBFlagField string) {
 	f.db = nil
 	f.DBFile = DBFile
 	f.DBTable = DBTable
@@ -63,6 +57,7 @@ func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFi
 	f.cdrFields = cdrFields
 	f.results = nil
 	f.sqlQuery = ""
+	f.DBFlagField = DBFlagField
 }
 
 // func NewSQLFetcher(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields) *SQLFetcher {
@@ -89,7 +84,7 @@ func (f *SQLFetcher) PrepareQuery() error {
 	var strSQL bytes.Buffer
 
 	slimit := fmt.Sprintf("LIMIT %d", f.maxPushBatch)
-	clause := "WHERE " + CDRFlagField + "<>1"
+	clause := "WHERE " + f.DBFlagField + "<>1"
 	sqlb := FetchSQL{ListFields: strFields, Table: "cdr", Limit: slimit, Clause: clause}
 	t := template.Must(template.New("sql").Parse(tsql))
 
@@ -170,7 +165,7 @@ func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE rowid IN ({{.CDRids}})"
 	var strSQL bytes.Buffer
 
-	sqlb := UpdateCDR{Table: CDRTable, Fieldname: CDRFlagField, Status: status, CDRids: f.listIDs}
+	sqlb := UpdateCDR{Table: f.DBTable, Fieldname: f.DBFlagField, Status: status, CDRids: f.listIDs}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&strSQL, sqlb)
@@ -189,7 +184,7 @@ func (f *SQLFetcher) AddFieldTrackImport() error {
 	const tsql = "ALTER TABLE {{.Table}} ADD {{.Fieldname}} INTEGER DEFAULT 0"
 	var strSQL bytes.Buffer
 
-	sqlb := UpdateCDR{Table: CDRTable, Fieldname: CDRFlagField, Status: 0}
+	sqlb := UpdateCDR{Table: f.DBTable, Fieldname: f.DBFlagField, Status: 0}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&strSQL, sqlb)
