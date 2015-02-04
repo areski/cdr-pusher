@@ -24,7 +24,6 @@ Next we would like to implement:
 - Extra DB backend for FS: Mysql, CSV, etc...
 - Add support to fetch Asterisk CDRs
 - Add support to fetch Kamailio CDRs (Mysql) and CSV
-- Implement Push to Riak (cf sample_cdr_riak.go)
 
 
 ## Install / Run
@@ -57,8 +56,8 @@ Visit gocover for the test coverage: http://gocover.io/github.com/areski/cdr-pus
 
 Config file `/etc/cdr-pusher.yaml`:
 
-    # storage_dest_type: accepted value "postgres" or "riak"
-    storage_destination: "postgres"
+    # storage_dest_type defines where push the CDRs (accepted values: "postgres", "riak" or "both")
+    storage_destination: "both"
 
     # Used when storage_dest_type = postgres
     # datasourcename: connect string to connect to PostgreSQL used by sql.Open
@@ -71,6 +70,10 @@ Config file `/etc/cdr-pusher.yaml`:
     # Used when storage_dest_type = riak
     # riak_connect: connect string to connect to Riak used by riak.ConnectClient
     riak_connect: "127.0.0.1:8087"
+
+    # Used when storage_dest_type = postgres
+    # riak_bucket: the bucket name to store CDRs in Riak
+    riak_bucket: "cdr_import"
 
     # storage_source_type: type to CDRs to push
     storage_source: "sqlite"
@@ -92,6 +95,7 @@ Config file `/etc/cdr-pusher.yaml`:
     max_push_batch: 1000
 
     # cdr_fields is list of fields that will be fetched (from SQLite3) and pushed (to PostgreSQL)
+    # - if dest_field is callid, it will be used in riak as key to insert
     cdr_fields:
         - orig_field: uuid
           dest_field: callid
