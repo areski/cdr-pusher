@@ -25,13 +25,13 @@ import (
 // Wait time for results in goroutine
 const WAITTIME = 60
 
-// Fetch CDRs from datasource
-func gofetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
+// RunFetcher fetchs non imported CDRs from the local datasource (SQLite)
+func RunFetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	f := new(SQLFetcher)
 	if config.StorageSource == "sqlite" {
 		f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields, config.DBFlagField)
 		for {
-			log.Debug("gofetcher waiting on chanSync before fetching")
+			log.Debug("RunFetcher waiting on chanSync before fetching")
 			<-chanSync
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
@@ -43,40 +43,55 @@ func gofetcher(config Config, chanRes chan map[int][]string, chanSync chan bool)
 				chanRes <- f.results
 			}
 			// Wait x seconds between each DB fetch | Heartbeat
-			log.Info("gofetcher sleeps for " + strconv.Itoa(config.Heartbeat) + " seconds!")
+			log.Info("RunFetcher sleeps for " + strconv.Itoa(config.Heartbeat) + " seconds!")
 			time.Sleep(time.Second * time.Duration(config.Heartbeat))
 		}
 	}
 }
 
-// Push CDRs to storage
-func gopusher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
+// DispatchPush is a dispacher to push the results to the right storage
+func DispatchPush(config Config, results map[int][]string) {
+	if config.StorageDestination == "postgres" || config.StorageDestination == "both" {
+		// Push CDRs to PostgreSQL
+		pc := new(PGPusher)
+		pc.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.TableDestination)
+		err := pc.Push(results)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
+	if config.StorageDestination == "riak" || config.StorageDestination == "both" {
+		// Push CDRs to Riak
+		rc := new(RiakPusher)
+		rc.Init(config.RiakConnect, config.CDRFields, config.SwitchIP, config.RiakBucket)
+		err := rc.Push(results)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
+}
+
+// PushResult is goroutine that will push CDRs to storage when receiving from results
+// on channel chanRes
+func PushResult(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	for {
-		log.Debug("gopusher sending chanSync to start Fetching")
+		log.Debug("PushResult sending chanSync to start Fetching")
 		// Send signal to go_fetch to fetch
 		chanSync <- true
 		// waiting for CDRs on channel
 		select {
 		case results := <-chanRes:
-			if config.StorageDestination == "postgres" {
-				// Push CDRs to PostgreSQL
-				p := new(PGPusher)
-				p.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.TableDestination)
-				err := p.Push(results)
-				if err != nil {
-					log.Error(err.Error())
-					continue
-				}
-			}
+			// Send results to storage engine
+			DispatchPush(config, results)
 		case <-time.After(time.Second * WAITTIME):
 			log.Debug("Nothing received yet...")
 		}
 	}
 }
 
-// goCreateFakeCDRs is created for tests purpose, it will populate the SQlite database
-// with fake CDRs at certain interval of time
-func goPopulateFakeCDRs(config Config) error {
+// PopulateFakeCDR is provided for tests purpose, it takes care of populating the
+// SQlite database with fake CDRs at interval of time.
+func PopulateFakeCDR(config Config) error {
 	if config.FakeCDR != "yes" {
 		return nil
 	}
@@ -90,7 +105,9 @@ func goPopulateFakeCDRs(config Config) error {
 	}
 }
 
-func runApp() (string, error) {
+// RunApp is the core function of the service it launchs the different goroutines
+// that will fetch and push
+func RunApp() (string, error) {
 	LoadConfig(defaultConf)
 	if err := ValidateConfig(config); err != nil {
 		panic(err)
@@ -100,9 +117,9 @@ func runApp() (string, error) {
 	chanRes := make(chan map[int][]string, 1)
 
 	// Start the coroutines
-	go gofetcher(config, chanRes, chanSync)
-	go gopusher(config, chanRes, chanSync)
-	go goPopulateFakeCDRs(config)
+	go RunFetcher(config, chanRes, chanSync)
+	go PushResult(config, chanRes, chanSync)
+	go PopulateFakeCDR(config)
 
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
@@ -152,6 +169,6 @@ func main() {
 	// log.SetLevel(log.DebugLevel)
 
 	log.Info("StartTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
-	runApp()
+	RunApp()
 	log.Info("StopTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 }

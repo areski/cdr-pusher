@@ -19,6 +19,8 @@ func mainSecond() {
 	// log.Debug("Loaded Config:\n%# v\n\n", pretty.Formatter(config))
 	// ----------------------- RIAK ------------------------
 
+	// client = New(riakhost)
+	// err := client.Connect()
 	err := riak.ConnectClient("127.0.0.1:8087")
 	if err != nil {
 		fmt.Println("Cannot connect, is Riak running?")

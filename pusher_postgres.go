@@ -208,6 +208,7 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 		return err
 	}
 	var res sql.Result
+	p.countPushed = 0
 	for _, vmap := range data {
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
 		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
@@ -220,6 +221,7 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 		if err != nil {
 			log.Debug("RowsAffected:", num)
 		}
+		p.countPushed = p.countPushed + 1
 	}
 
 	if err = tx.Commit(); err != nil {

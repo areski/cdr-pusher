@@ -31,6 +31,7 @@ type Config struct {
 	PGDatasourcename   string        "pg_datasourcename"
 	TableDestination   string        "table_destination"
 	RiakConnect        string        "riak_connect"
+	RiakBucket         string        "riak_bucket"
 	StorageSource      string        "storage_source"
 	DBFile             string        "db_file"
 	DBTable            string        "db_table"
@@ -80,6 +81,10 @@ func ValidateConfig(config Config) error {
 	}
 	switch config.StorageDestination {
 	case "postgres":
+		// could check more settings
+	case "riak":
+		// could check more settings
+	case "both":
 		// could check more settings
 	default:
 		return errors.New("not a valid conf setting 'storage_destination'")
