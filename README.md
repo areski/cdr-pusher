@@ -50,19 +50,6 @@ The config file [cdr-pusher.yaml](https://raw.githubusercontent.com/areski/cdr-p
 is installed at the following location: /etc/cdr-pusher.yaml
 
 
-## Testing
-
-To run the tests, follow this step:
-
-    $ cd cdr-pusher
-    $ go test .
-
-
-## Test Coverage
-
-Visit gocover for the test coverage: http://gocover.io/github.com/areski/cdr-pusher
-
-
 ## Configuration file
 
 Config file `/etc/cdr-pusher.yaml`:
@@ -162,9 +149,11 @@ Some Linux distributions offer a version of Supervisor that is installable throu
 
 #### Creating a Configuration File
 
+
+Follow those steps if you don't have config file for supervisord.
 Once you see the file echoed to your terminal, reinvoke the command as:
 
-    echo_supervisord_conf > /etc/supervisord.conf
+    echo_supervisord_conf > /etc/supervisor/supervisord.conf
 
 This won’t work if you do not have root access, then make sure a `.conf.d` run:
 
@@ -176,18 +165,29 @@ Copy Supervisor conf file for cdr-pusher:
 
     cp ./supervisord/cdr-pusher-prog.conf /etc/supervisord.conf.d/
 
+The makefile provides a function to copy the supervisor conf file:
+
+    make install-supervisor-conf
+
 ### Supervisord Manage
 
 Supervisord provides 2 commands, supervisord and supervisorctl:
 
     supervisord: Initialize Supervisord, run configed processes
-    supervisorctl stop programxxx: Stop process programxxx. programxxx is configed name in [program:beepkg]. Here is beepkg.
-    supervisorctl start programxxx: Run the process.
-    supervisorctl restart programxxx: Restart the process.
+    supervisorctl stop programX: Stop process programX. programX is config name in [program:mypkg].
+    supervisorctl start programX: Run the process.
+    supervisorctl restart programX: Restart the process.
     supervisorctl stop groupworker: Restart all processes in group groupworker
     supervisorctl stop all: Stop all processes. Notes: start, restart and stop won’t reload the latest configs.
     supervisorctl reload: Reload the latest configs.
     supervisorctl update: Reload all the processes whoes config changed.
+
+### Supervisord Service
+
+You can also use supervisor using the supervisor service:
+
+    /etc/init.d/supervisor start
+
 
 ## Configure FreeSWITCH
 
@@ -195,7 +195,7 @@ A shell script is provided to install FreeSWITCH on Debian 7.x: https://github.c
 
 FreeSWITCH mod_cdr_sqlite is used to store locally the CDRs prior being fetch and send by cdr_pusher: https://wiki.freeswitch.org/wiki/Mod_cdr_sqlite
 
-Some customization can be achieved by editing the config file `cdr-pusher.yaml` and by tweaking the config of Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to send specific fields in your CDRs, you will need to change both configuration files and ensure that the custom field are properly stored in SQLite, then CDR-Pusher offer enough flexibility to push any custom field.
+Some customization can be achieved by editing the config file `cdr-pusher.yaml` and by tweaking the config of Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to same custom fields in your CDRs, you will need to change both configuration files and ensure that the custom field are properly stored in SQLite, then CDR-Pusher offer enough flexibility to push any custom field.
 
 
 ## GoLint
@@ -203,6 +203,18 @@ Some customization can be achieved by editing the config file `cdr-pusher.yaml` 
 http://go-lint.appspot.com/github.com/areski/cdr-pusher
 
 http://goreportcard.com/report/areski/cdr-pusher
+
+
+## Testing
+
+To run the tests, follow this step:
+
+    $ go test .
+
+
+## Test Coverage
+
+Visit gocover for the test coverage: http://gocover.io/github.com/areski/cdr-pusher
 
 
 ## License
