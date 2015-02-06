@@ -1,9 +1,7 @@
 #!/bin/bash
 #
-# The primary maintainer of this project is
-# Arezqui Belaid <info@star2billing.com>
+# The primary maintainer of this project is Areski Belaid <areski@gmail.com>
 #
-
 #
 # To download and run the script on your server :
 # cd /usr/src/ ; rm install-freeswitch.sh ; wget --no-check-certificate https://raw.github.com/areski/cdr-pusher/master/install/install-freeswitch.sh ; chmod +x install-freeswitch.sh ; ./install-freeswitch.sh

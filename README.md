@@ -237,7 +237,7 @@ Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
 - [x] Add check for PG connection in goroutine (connect error + Ping)
 - [x] Push CDRs to Riak
 - [x] Improve Riak store with ConnectionPool
-- [ ] Deploy with Supervisord
-- [ ] Review install / deployment documentation
-- [ ] Install script Go App
-- [ ] Ansible Support
+- [x] Deploy with Supervisord
+- [x] Review install / Deployment documentation
+- [x] Add bash script to install cdr-pusher
+- [ ] Deploy with Ansible
