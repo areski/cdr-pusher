@@ -22,6 +22,6 @@ configfile:
 get:
 	@go get -d ./...
 
-build: get
+build: get configfile
 	@mkdir -p bin
 	@go build -a -o bin/cdr-pusher .

@@ -30,9 +30,6 @@ We are planning to implement the following very soon:
 
 ## Install / Run
 
-The config file [cdr-pusher.yaml](https://raw.githubusercontent.com/areski/cdr-pusher/master/cdr-pusher.yaml)
-is installed at the following location: /etc/cdr-pusher.yaml
-
 Install Golang (Debian/Ubuntu):
 
     $ apt-get install golang
@@ -48,6 +45,9 @@ To install and run the cdr-pusher application, follow those steps:
     $ export GOPATH=`pwd`
     $ make build
     $ ./bin/cdr-pusher
+
+The config file [cdr-pusher.yaml](https://raw.githubusercontent.com/areski/cdr-pusher/master/cdr-pusher.yaml)
+is installed at the following location: /etc/cdr-pusher.yaml
 
 
 ## Testing
