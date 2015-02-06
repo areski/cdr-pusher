@@ -1,11 +1,13 @@
 # CDR-Pusher
 
-CDR-Pusher is a Go Application that will push your stored CDRs (Call Detail
-Record) from your local storage (See list of supported storage) to a distant
-PostGreSQL or Riak Cluster.
+CDR-Pusher is a Go Application that will push your CDRs (Call Detail Record)
+from your local storage (See list of supported storage) to a PostgreSQL Database
+or to a Riak Cluster.
 
-This can be used to centralize your CDRs or simply to safely backup them in
-realtime. Software, like CDR-Stats, can then be used to provide CDR reporting.
+This can be used to centralize your CDRs or simply to safely backup them.
+
+Using a common way to store CDRs can enable application like CDR-Stats to provide
+a generic call / billing reporting on your call data independently of your switch.
 
 [![circleci](https://circleci.com/gh/areski/cdr-pusher.png)](https://circleci.com/gh/areski/cdr-pusher)
 
@@ -14,14 +16,14 @@ realtime. Software, like CDR-Stats, can then be used to provide CDR reporting.
 
 ## Roadmap
 
-Our first focus was to support FreeSWITCH CDRs, we decided to go for SQLite
-backend as it seems to be the less invasive and easy enough to configure,
-plus SQLite give the posibility to mark/track the pushed records which is safer
+Our first focus was to support FreeSWITCH CDRs, that's why we decided to support
+the SQLite backend, it's also the less invasive and one of the easiest to configure.
+SQLite give also the posibility to mark/track the pushed records which is safer
 than importing them from CSV files.
 
-Next we would like to implement:
+We are planning to implement the following very soon:
 
-- Extra DB backend for FS: Mysql, CSV, etc...
+- Extra DB backend for FreeSWITCH: Mysql, CSV, etc...
 - Add support to fetch Asterisk CDRs
 - Add support to fetch Kamailio CDRs (Mysql) and CSV
 
