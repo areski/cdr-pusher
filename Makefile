@@ -20,7 +20,7 @@ configfile:
 	cp cdr-pusher.yaml /etc/cdr-pusher.yaml
 
 install-supervisor-conf:
-	cp install/supervisord/fs-pusher-prog.conf /etc/supervisor/conf.d/
+	cp install/supervisord/cdr-pusher-prog.conf /etc/supervisor/conf.d/
 
 get:
 	@go get -d ./...
