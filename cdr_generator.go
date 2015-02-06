@@ -41,6 +41,7 @@ func (c *CDR) TableName() string {
 
 func init() {
 	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
+	// TODO: use f.DBFile instead of hardcoded ./sqlitedb/cdr.db
 	orm.RegisterDataBase("default", "sqlite3", "./sqlitedb/cdr.db")
 	orm.RegisterModel(new(CDR))
 }
@@ -81,6 +82,6 @@ func GenerateCDR(sqliteDBpath string, amount int) error {
 		log.Error(err.Error())
 		return err
 	}
-	log.Info("Successnums inserted: ", successNums)
+	log.Info("Generate Fake CDRs, inserted: ", successNums)
 	return nil
 }

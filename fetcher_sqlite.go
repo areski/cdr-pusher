@@ -68,7 +68,7 @@ func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFi
 // Connect will help to connect to the DBMS, here we implemented the connection to SQLite
 func (f *SQLFetcher) Connect() error {
 	var err error
-	f.db, err = sql.Open("sqlite3", "./sqlitedb/cdr.db")
+	f.db, err = sql.Open("sqlite3", f.DBFile)
 	if err != nil {
 		log.Error("Failed to connect", err)
 		return err
@@ -111,14 +111,14 @@ func (f *SQLFetcher) ScanResult() error {
 	// Init numFetched to 0
 	f.numFetched = 0
 	rows, err := f.db.Query(f.sqlQuery)
-	defer rows.Close()
 	if err != nil {
-		log.Error("Failed to run query", err)
+		log.Error("Failed to run query:", err.Error())
 		return err
 	}
+	defer rows.Close()
 	cols, err := rows.Columns()
 	if err != nil {
-		log.Error("Failed to get columns", err)
+		log.Error("Failed to get columns:", err.Error())
 		return err
 	}
 	// Result is your slice string.

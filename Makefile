@@ -22,6 +22,9 @@ configfile:
 install-supervisor-conf:
 	cp install/supervisord/cdr-pusher-prog.conf /etc/supervisor/conf.d/
 
+logdir:
+	@mkdir /var/log/cdr-pusher
+
 get:
 	@go get -d ./...
 

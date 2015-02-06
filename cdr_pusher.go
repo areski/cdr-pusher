@@ -31,15 +31,14 @@ func RunFetcher(config Config, chanRes chan map[int][]string, chanSync chan bool
 	if config.StorageSource == "sqlite" {
 		f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields, config.DBFlagField)
 		for {
-			log.Debug("RunFetcher waiting on chanSync before fetching")
+			log.Info("RunFetcher waiting on chanSync before fetching")
 			<-chanSync
 			// Fetch CDRs from SQLite
 			err := f.Fetch()
 			if err != nil {
 				log.Error(err.Error())
-				panic(err)
 			}
-			if f.results != nil {
+			if err == nil && f.results != nil {
 				chanRes <- f.results
 			}
 			// Wait x seconds between each DB fetch | Heartbeat
