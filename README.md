@@ -212,8 +212,9 @@ Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
 - [x] Code coverage: http://gocover.io
 - [x] Improve Code coverage
 - [x] Add check for PG connection in goroutine (connect error + Ping)
-- [ ] Push CDRs to Riak
+- [x] Push CDRs to Riak
 - [ ] Deploy with Supervisord
 - [ ] Review install / deployment documentation
 - [ ] Install script Go App
 - [ ] Ansible Support
+- [ ] Improve Riak store with ConnectionPool

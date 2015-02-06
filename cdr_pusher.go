@@ -108,7 +108,10 @@ func PopulateFakeCDR(config Config) error {
 // RunApp is the core function of the service it launchs the different goroutines
 // that will fetch and push
 func RunApp() (string, error) {
-	LoadConfig(defaultConf)
+	if err := LoadConfig(prodConf); err != nil {
+		log.Error(err.Error())
+		return "", err
+	}
 	if err := ValidateConfig(config); err != nil {
 		panic(err)
 	}

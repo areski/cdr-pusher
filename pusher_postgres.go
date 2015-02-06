@@ -272,6 +272,6 @@ func (p *PGPusher) Push(fetchedResults map[int][]string) error {
 	if err != nil {
 		return err
 	}
-	log.Debug("Total number pushed:", p.countPushed)
+	log.Info("Total number pushed to PostgreSQL:", p.countPushed)
 	return nil
 }

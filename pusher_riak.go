@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/tpjg/goriakpbc"
 	"time"
@@ -37,21 +38,21 @@ func (p *RiakPusher) Init(RiakConnect string, cdrFields []ParseFields, switchIP 
 // Connect will help to connect to the DBMS, here we implemented the connection to SQLite
 func (p *RiakPusher) Connect() error {
 	var err error
-	client := riak.New(p.RiakConnect)
-	err = client.Connect()
-	// err = riak.ConnectClient("127.0.0.1:8087")
+	// client := riak.New(p.RiakConnect)
+	// err = client.Connect()
+	err = riak.ConnectClient(p.RiakConnect)
 	if err != nil {
 		log.Error("Cannot connect to Riak: ", err.Error())
 		return err
 	}
-	err = client.Ping()
-	if err != nil {
-		log.Error("Cannot ping Riak: ", err.Error())
-		return err
-	}
+	// err = client.Ping()
+	// if err != nil {
+	// 	log.Error("Cannot ping Riak: ", err.Error())
+	// 	return err
+	// }
 	p.bucket, err = riak.NewBucket("testriak")
 	if err != nil {
-		log.Error("Cannot connect to Riak Bucket: ", err.Error())
+		log.Error("Cannot connect to Riak Bucket(", p.RiakConnect, "): ", err.Error())
 		return err
 	}
 	return nil
@@ -79,20 +80,16 @@ func (p *RiakPusher) FmtDataExport(fetchedResults map[int][]string) (map[int]map
 		data[i]["id"] = v[0]
 		data[i]["switch"] = p.switchIP
 		data[i]["callid"] = ""
-		extradata := make(map[string]string)
+		// extradata := make(map[string]string)
 		for j, f := range p.cdrFields {
-			if f.DestField == "extradata" {
-				extradata[f.OrigField] = v[j+1]
-			} else {
-				data[i][f.DestField] = v[j+1]
-			}
+			data[i][f.DestField] = v[j+1]
 		}
-		jsonExtra, err := json.Marshal(extradata)
+		jsonData, err := json.Marshal(data[i])
 		if err != nil {
 			log.Error("Error:", err.Error())
 			return nil, err
 		} else {
-			data[i]["extradata"] = string(jsonExtra)
+			data[i]["jsonfmt"] = string(jsonData)
 		}
 		i = i + 1
 	}
@@ -111,17 +108,16 @@ func (p *RiakPusher) BatchInsert(fetchedResults map[int][]string) error {
 		return err
 	}
 	p.countPushed = 0
-	for _, vmap := range data {
-		log.Info(vmap)
-		// bucketkey := "callid-" + vmap["callid"] + "-" + vmap["switch"]
-		log.Info(vmap["switch"])
-		bucketkey := "superkey"
-		log.Info("bucketkey=> ", bucketkey)
+	for _, val := range data {
+		bucketkey := fmt.Sprintf("callid-%v-%v", val["callid"], val["switch"])
+		log.Info("New bucketkey=> ", bucketkey)
 		obj := p.bucket.NewObject(bucketkey)
 		obj.ContentType = "application/json"
-		// TODO ????
-		obj.Data = []byte("{'field1':'value', 'field2':'new', 'phonenumber':'3654564318', 'date':'2013-10-01 14:42:26'}")
+		obj.Data = []byte(fmt.Sprintf("%v", val["jsonfmt"]))
 		obj.Store()
+		// TODO: there isn't a bulk insert mode in Riak, the way to insert faster would be
+		// by using connectPool (NewClientPool: Returns a new Client with multiple
+		// connections to Riak)
 		p.countPushed = p.countPushed + 1
 	}
 	return nil
@@ -142,6 +138,6 @@ func (p *RiakPusher) Push(fetchedResults map[int][]string) error {
 	if err != nil {
 		return err
 	}
-	log.Debug("Total number pushed:", p.countPushed)
+	log.Info("Total number pushed to Riak:", p.countPushed)
 	return nil
 }
