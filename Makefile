@@ -16,6 +16,9 @@ test:
 servedoc:
 	godoc -http=:6060
 
+configfile:
+	cp cdr-pusher.yaml /etc/cdr-pusher.yaml
+
 get:
 	@go get -d ./...
 

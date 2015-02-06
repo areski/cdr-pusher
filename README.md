@@ -30,10 +30,19 @@ We are planning to implement the following very soon:
 
 ## Install / Run
 
-The config file need to be installed at the following location /etc/cdr-pusher.yaml
+The config file [cdr-pusher.yaml](https://raw.githubusercontent.com/areski/cdr-pusher/master/cdr-pusher.yaml)
+is installed at the following location: /etc/cdr-pusher.yaml
+
+Install Golang (Debian/Ubuntu):
+
+    $ apt-get install golang
+    $ apt-get install mercurial git bzr
+
 
 To install and run the cdr-pusher application, follow those steps:
 
+    $ mkdir /opt/app
+    $ cd /opt/app
     $ git clone https://github.com/areski/cdr-pusher.git
     $ cd cdr-pusher
     $ export GOPATH=`pwd`
