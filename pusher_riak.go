@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const RIAK_WORKERS = 100
+
 // RiakPusher structure will help us to push CDRs to PostgreSQL.
 // the structure will held properties to connect to the PG DBMS and
 // push the CDRs, such as RiakConnect and RiakBucket
@@ -40,7 +42,7 @@ func (p *RiakPusher) Connect() error {
 	var err error
 	// client := riak.New(p.RiakConnect)
 	// err = client.Connect()
-	err = riak.ConnectClient(p.RiakConnect)
+	err = riak.ConnectClientPool(p.RiakConnect, 25)
 	if err != nil {
 		log.Error("Cannot connect to Riak: ", err.Error())
 		return err
@@ -96,6 +98,22 @@ func (p *RiakPusher) FmtDataExport(fetchedResults map[int][]string) (map[int]map
 	return data, nil
 }
 
+// RecordInsert will insert one record to Riak
+func (p *RiakPusher) RecordInsert(val map[string]interface{}, c chan<- bool) error {
+	defer func() {
+		c <- true
+	}()
+	bucketkey := fmt.Sprintf("callid-%v-%v", val["callid"], val["switch"])
+	// log.Info("New bucketkey=> ", bucketkey)
+	obj := p.bucket.NewObject(bucketkey)
+	obj.ContentType = "application/json"
+	obj.Data = []byte(fmt.Sprintf("%v", val["jsonfmt"]))
+	obj.Store()
+	p.countPushed = p.countPushed + 1
+	log.Debug("Stored bucketkey=> ", bucketkey, " - Total pushed:", p.countPushed)
+	return nil
+}
+
 // BatchInsert take care of loop through the fetchedResults and push them to PostgreSQL
 func (p *RiakPusher) BatchInsert(fetchedResults map[int][]string) error {
 	// create the statement string
@@ -109,16 +127,15 @@ func (p *RiakPusher) BatchInsert(fetchedResults map[int][]string) error {
 	}
 	p.countPushed = 0
 	for _, val := range data {
-		bucketkey := fmt.Sprintf("callid-%v-%v", val["callid"], val["switch"])
-		log.Info("New bucketkey=> ", bucketkey)
-		obj := p.bucket.NewObject(bucketkey)
-		obj.ContentType = "application/json"
-		obj.Data = []byte(fmt.Sprintf("%v", val["jsonfmt"]))
-		obj.Store()
-		// TODO: there isn't a bulk insert mode in Riak, the way to insert faster would be
-		// by using connectPool (NewClientPool: Returns a new Client with multiple
-		// connections to Riak)
-		p.countPushed = p.countPushed + 1
+		//TODO: Could go faster by implementing a relaunch of worker for the free channels
+		workers := make(chan bool, RIAK_WORKERS)
+		for i := 0; i < RIAK_WORKERS; i++ {
+			go p.RecordInsert(val, workers)
+		}
+		for i := 0; i < RIAK_WORKERS; i++ {
+			<-workers
+			// log.Info("Missing wordkers: ", (RIAK_WORKERS-i)-1)
+		}
 	}
 	return nil
 }
