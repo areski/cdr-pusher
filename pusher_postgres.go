@@ -63,7 +63,8 @@ var sqlCreateTable = `CREATE TABLE IF NOT EXISTS {{.Table}} (
         buy_cost numeric(12,5),
         sell_rate numeric(10,5),
         sell_cost numeric(12,5),
-        extradata jsonb
+        extradata jsonb,
+        imported boolean NOT NULL DEFAULT FALSE
     )`
 
 // PGPusher structure will help us to push CDRs to PostgreSQL.
