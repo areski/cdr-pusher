@@ -72,6 +72,10 @@ cdr_fields:
 # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
 switch_ip: ""
 
+# cdr_source_type: write the id of the cdr sources type
+# (accepted value: unknown: 0, freeswitch: 1, asterisk: 2, yate: 3, kamailio: 4, opensips: 5)
+cdr_source_type: 1
+
 # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
 fake_cdr: "no"
 

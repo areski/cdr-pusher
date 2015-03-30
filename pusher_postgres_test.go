@@ -13,7 +13,7 @@ func TestPush(t *testing.T) {
 	config.CDRFields = cdrFields
 
 	p := new(PGPusher)
-	p.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.TableDestination)
+	p.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.CDRSourceType, config.TableDestination)
 
 	var err error
 	// err = p.Connect()

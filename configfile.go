@@ -40,6 +40,7 @@ type Config struct {
 	MaxPushBatch       int           "max_push_batch"
 	CDRFields          []ParseFields "cdr_fields"
 	SwitchIP           string        "switch_ip"
+	CDRSourceType      int           "cdr_source_type"
 	FakeCDR            string        "fake_cdr"
 	FakeAmountCDR      int           "fake_amount_cdr"
 }

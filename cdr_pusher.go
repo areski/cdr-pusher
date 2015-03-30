@@ -53,7 +53,7 @@ func DispatchPush(config Config, results map[int][]string) {
 	if config.StorageDestination == "postgres" || config.StorageDestination == "both" {
 		// Push CDRs to PostgreSQL
 		pc := new(PGPusher)
-		pc.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.TableDestination)
+		pc.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.CDRSourceType, config.TableDestination)
 		err := pc.Push(results)
 		if err != nil {
 			log.Error(err.Error())
@@ -62,7 +62,7 @@ func DispatchPush(config Config, results map[int][]string) {
 	if config.StorageDestination == "riak" || config.StorageDestination == "both" {
 		// Push CDRs to Riak
 		rc := new(RiakPusher)
-		rc.Init(config.RiakConnect, config.CDRFields, config.SwitchIP, config.RiakBucket)
+		rc.Init(config.RiakConnect, config.CDRFields, config.SwitchIP, config.CDRSourceType, config.RiakBucket)
 		err := rc.Push(results)
 		if err != nil {
 			log.Error(err.Error())

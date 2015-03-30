@@ -76,6 +76,7 @@ type PGPusher struct {
 	tableDestination string
 	cdrFields        []ParseFields
 	switchIP         string
+	cdrSourceType    int
 	countPushed      int
 	sqlQuery         string
 }
@@ -89,7 +90,7 @@ type PushSQL struct {
 
 // Init is a constructor for PGPusher
 // It will help setting pgDataSourceName, cdrFields, switchIP and tableDestination
-func (p *PGPusher) Init(pgDataSourceName string, cdrFields []ParseFields, switchIP string, tableDestination string) {
+func (p *PGPusher) Init(pgDataSourceName string, cdrFields []ParseFields, switchIP string, cdrSourceType int, tableDestination string) {
 	p.db = nil
 	p.pgDataSourceName = pgDataSourceName
 	p.cdrFields = cdrFields
@@ -100,6 +101,7 @@ func (p *PGPusher) Init(pgDataSourceName string, cdrFields []ParseFields, switch
 		}
 	}
 	p.switchIP = switchIP
+	p.cdrSourceType = cdrSourceType
 	p.sqlQuery = ""
 	p.tableDestination = tableDestination
 }
@@ -168,6 +170,7 @@ func (p *PGPusher) FmtDataExport(fetchedResults map[int][]string) (map[int]map[s
 		data[i] = make(map[string]interface{})
 		data[i]["id"] = v[0]
 		data[i]["switch"] = p.switchIP
+		data[i]["cdr_source_type"] = p.cdrSourceType
 		extradata := make(map[string]string)
 		for j, f := range p.cdrFields {
 			if f.DestField == "extradata" {

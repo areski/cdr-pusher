@@ -14,17 +14,18 @@ const RIAK_WORKERS = 100
 // the structure will held properties to connect to the PG DBMS and
 // push the CDRs, such as RiakConnect and RiakBucket
 type RiakPusher struct {
-	bucket      *riak.Bucket
-	RiakConnect string
-	RiakBucket  string
-	cdrFields   []ParseFields
-	switchIP    string
-	countPushed int
+	bucket        *riak.Bucket
+	RiakConnect   string
+	RiakBucket    string
+	cdrFields     []ParseFields
+	switchIP      string
+	cdrSourceType int
+	countPushed   int
 }
 
 // Init is a constructor for RiakPusher
 // It will help setting RiakConnect, cdrFields, switchIP and RiakBucket
-func (p *RiakPusher) Init(RiakConnect string, cdrFields []ParseFields, switchIP string, RiakBucket string) {
+func (p *RiakPusher) Init(RiakConnect string, cdrFields []ParseFields, switchIP string, cdrSourceType int, RiakBucket string) {
 	p.RiakConnect = RiakConnect
 	p.cdrFields = cdrFields
 	if switchIP == "" {
@@ -34,6 +35,7 @@ func (p *RiakPusher) Init(RiakConnect string, cdrFields []ParseFields, switchIP 
 		}
 	}
 	p.switchIP = switchIP
+	p.cdrSourceType = cdrSourceType
 	p.RiakBucket = RiakBucket
 }
 
@@ -82,6 +84,7 @@ func (p *RiakPusher) FmtDataExport(fetchedResults map[int][]string) (map[int]map
 		data[i]["id"] = v[0]
 		data[i]["switch"] = p.switchIP
 		data[i]["callid"] = ""
+		data[i]["cdr_source_type"] = p.cdrSourceType
 		// extradata := make(map[string]string)
 		for j, f := range p.cdrFields {
 			data[i][f.DestField] = v[j+1]
