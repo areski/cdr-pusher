@@ -6,10 +6,11 @@ PostgreSQL Database or to a Riak Cluster.
 
 This can be used to centralize your CDRs or simply to safely backup them.
 
-Unifying your CDRs make it easy for call analyst to do their job. Software
+Unifying your CDRs make it easy for call Analysts to do their job. Software
 like CDR-Stats (http://www.cdr-stats.org/) can efficiently provide Call &
-Billing reporting independently the type of switches you are using such as Asterisk,
-FreeSWITCH, Kamailio & others.
+Billing reporting independently of the type of switches you have in your
+infrastructure, so you can centralized CDRs coming from different
+communications platform such as Asterisk, FreeSWITCH, Kamailio & others.
 
 [![circleci](https://circleci.com/gh/areski/cdr-pusher.png)](https://circleci.com/gh/areski/cdr-pusher)
 
@@ -18,10 +19,22 @@ FreeSWITCH, Kamailio & others.
 
 ## Install / Run
 
-Install Golang (Debian/Ubuntu):
+Install Golang dependencies (Debian/Ubuntu):
 
-    $ apt-get install golang
-    $ apt-get install mercurial git bzr
+    $ apt-get -y install mercurial git bzr bison
+    $ apt-get -y install bison
+
+
+Install GVM to select which version of Golang you want to install:
+
+    $ bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
+    $ source /root/.gvm/scripts/gvm
+    $ gvm install go1.4.2
+    $ gvm use go1.4.2 --default
+
+Make sure you are running by default Go version >= 1.4.2, check by typing the following:
+
+    $ go version
 
 
 To install and run the cdr-pusher application, follow those steps:
