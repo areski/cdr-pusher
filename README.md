@@ -1,13 +1,15 @@
 # CDR-Pusher
 
 CDR-Pusher is a Go Application that will push your CDRs (Call Detail Record)
-from your local storage (See list of supported storage) to a PostgreSQL Database
-or to a Riak Cluster.
+from your local storage (See list of supported storage) to a centralized
+PostgreSQL Database or to a Riak Cluster.
 
 This can be used to centralize your CDRs or simply to safely backup them.
 
-Using a common way to store CDRs can enable application like CDR-Stats to provide
-a generic call / billing reporting on your call data independently of your switch.
+Unifying your CDRs make it easy for call analyst to do their job. Software
+like CDR-Stats (http://www.cdr-stats.org/) can efficiently provide Call &
+Billing reporting independently the type of switches you are using such as Asterisk,
+FreeSWITCH, Kamailio & others.
 
 [![circleci](https://circleci.com/gh/areski/cdr-pusher.png)](https://circleci.com/gh/areski/cdr-pusher)
 
