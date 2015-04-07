@@ -128,7 +128,9 @@ Config file `/etc/cdr-pusher.yaml`:
 
 This application aims to be run as Service, it can easily be run by Supervisord.
 
+
 ### Install Supervisord
+
 
 #### Via Distribution Package
 
@@ -139,7 +141,6 @@ Some Linux distributions offer a version of Supervisor that is installable throu
 
 #### Creating a Configuration File
 
-
 Follow those steps if you don't have config file for supervisord.
 Once you see the file echoed to your terminal, reinvoke the command as:
 
@@ -148,6 +149,7 @@ Once you see the file echoed to your terminal, reinvoke the command as:
 This won’t work if you do not have root access, then make sure a `.conf.d` run:
 
     mkdir /etc/supervisord.conf.d
+
 
 ### Configure CDR-Pusher with Supervisord
 
@@ -158,6 +160,7 @@ Copy Supervisor conf file for cdr-pusher:
 The makefile provides a function to copy the supervisor conf file:
 
     make install-supervisor-conf
+
 
 ### Supervisord Manage
 
@@ -171,6 +174,7 @@ Supervisord provides 2 commands, supervisord and supervisorctl:
     supervisorctl stop all: Stop all processes. Notes: start, restart and stop won’t reload the latest configs.
     supervisorctl reload: Reload the latest configs.
     supervisorctl update: Reload all the processes whoes config changed.
+
 
 ### Supervisord Service
 
@@ -205,7 +209,6 @@ Here an example of 'cdr_sqlite.conf':
         <template name="example">"${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}"</template>
       </templates>
     </configuration>
-
 
 
 ## GoLint
