@@ -14,20 +14,6 @@ a generic call / billing reporting on your call data independently of your switc
 [![Go Walker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/areski/cdr-pusher)
 
 
-## Roadmap
-
-Our first focus was to support FreeSWITCH CDRs, that's why we decided to support
-the SQLite backend, it's also the less invasive and one of the easiest to configure.
-SQLite give also the posibility to mark/track the pushed records which is safer
-than importing them from CSV files.
-
-We are planning to implement the following very soon:
-
-- Extra DB backend for FreeSWITCH: Mysql, CSV, etc...
-- Add support to fetch Asterisk CDRs
-- Add support to fetch Kamailio CDRs (Mysql) and CSV
-
-
 ## Install / Run
 
 Install Golang (Debian/Ubuntu):
@@ -195,11 +181,31 @@ You can also use supervisor using the supervisor service:
 
 ## Configure FreeSWITCH
 
-A shell script is provided to install FreeSWITCH on Debian 7.x: https://github.com/areski/cdr-pusher/blob/master/install/install-freeswitch.sh
-
 FreeSWITCH mod_cdr_sqlite is used to store locally the CDRs prior being fetch and send by cdr_pusher: https://wiki.freeswitch.org/wiki/Mod_cdr_sqlite
 
 Some customization can be achieved by editing the config file `cdr-pusher.yaml` and by tweaking the config of Mod_cdr_sqlite `cdr_sqlite.conf.xml`, for instance if you want to same custom fields in your CDRs, you will need to change both configuration files and ensure that the custom field are properly stored in SQLite, then CDR-Pusher offer enough flexibility to push any custom field.
+
+Here an example of 'cdr_sqlite.conf':
+
+    <configuration name="cdr_sqlite.conf" description="SQLite CDR">
+      <settings>
+        <!-- SQLite database name (.db suffix will be automatically appended) -->
+        <!-- <param name="db-name" value="cdr"/> -->
+        <!-- CDR table name -->
+        <!-- <param name="db-table" value="cdr"/> -->
+        <!-- Log a-leg (a), b-leg (b) or both (ab) -->
+        <param name="legs" value="a"/>
+        <!-- Default template to use when inserting records -->
+        <param name="default-template" value="example"/>
+        <!-- This is like the info app but after the call is hung up -->
+        <!--<param name="debug" value="true"/>-->
+      </settings>
+      <templates>
+        <!-- Note that field order must match SQL table schema, otherwise insert will fail -->
+        <template name="example">"${caller_id_name}","${caller_id_number}","${destination_number}","${context}","${start_stamp}","${answer_stamp}","${end_stamp}",${duration},${billsec},"${hangup_cause}","${uuid}","${bleg_uuid}","${accountcode}"</template>
+      </templates>
+    </configuration>
+
 
 
 ## GoLint
@@ -228,20 +234,15 @@ CDR-Pusher is licensed under MIT, see `LICENSE` file.
 Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
 
 
-## TODO
+## Roadmap
 
-- [x] Fetch & Push CDRs to Postgresql
-- [x] Implement using goroutine with channel to communicate between Fetcher <--> Pusher
-- [x] Add logging
-- [x] Add test / circle-ci / Badge
-- [x] Code lint: http://go-lint.appspot.com
-- [x] godoc / https://gowalker.org
-- [x] Code coverage: http://gocover.io
-- [x] Improve Code coverage
-- [x] Add check for PG connection in goroutine (connect error + Ping)
-- [x] Push CDRs to Riak
-- [x] Improve Riak store with ConnectionPool
-- [x] Deploy with Supervisord
-- [x] Review install / Deployment documentation
-- [x] Add bash script to install cdr-pusher
-- [ ] Deploy with Ansible
+Our first focus was to support FreeSWITCH CDRs, that's why we decided to support
+the SQLite backend, it's also the less invasive and one of the easiest to configure.
+SQLite give also the posibility to mark/track the pushed records which is safer
+than importing them from CSV files.
+
+We are planning to implement the following very soon:
+
+- Extra DB backend for FreeSWITCH: Mysql, CSV, etc...
+- Add support to fetch Asterisk CDRs
+- Add support to fetch Kamailio CDRs (Mysql)
