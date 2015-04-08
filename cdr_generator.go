@@ -51,11 +51,19 @@ func random(min, max int) int {
 func GenerateCDR(sqliteDBpath string, amount int) error {
 	once.Do(func() {
 		orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
-		// TODO: use f.DBFile instead of hardcoded ./sqlitedb/cdr.db
-		// orm.RegisterDataBase("default", "sqlite3", "./sqlitedb/cdr.db")
-		log.Info("=================>" + sqliteDBpath)
 		orm.RegisterDataBase("default", "sqlite3", sqliteDBpath)
 		orm.RegisterModel(new(CDR))
+
+		// You may wish to automatically create your database tables
+		// Database alias.
+		name := "default"
+		// Drop table and re-create.
+		force := true
+		verbose := true
+		err := orm.RunSyncdb(name, force, verbose)
+		if err != nil {
+			log.Error(err)
+		}
 	})
 	log.Debug("!!! We will populate " + sqliteDBpath + " with " + strconv.Itoa(amount) + " CDRs !!!")
 	fake, _ := faker.New("en")
