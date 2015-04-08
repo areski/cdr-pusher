@@ -27,6 +27,7 @@ type CDR struct {
 	EndStamp          time.Time `orm:"auto_now;column(end_stamp)"`
 	Billsec           int       `orm:"column(billsec)"`
 	HangupCause       string    `orm:"column(hangup_cause)"`
+	HangupCauseID     int       `orm:"column(hangup_cause_id)"`
 	UUID              string    `orm:"column(uuid)"`
 	BlegUUID          string    `orm:"column(bleg_uuid)"`
 	AccountCode       string    `orm:"column(account_code)"`
@@ -73,19 +74,23 @@ func GenerateCDR(sqliteDBpath string, amount int) error {
 	// orm.Debug = true
 	o.Using("default")
 
-	uuid4, _ := uuid.NewV4()
-	cidname := fake.Name()
-	cidnum := fake.PhoneNumber()
-	dstnum := fake.CellPhoneNumber()
-	duration := random(30, 300)
-	billsec := duration - 10
 	var listcdr = []CDR{}
 
 	for i := 0; i < amount; i++ {
+		uuid4, _ := uuid.NewV4()
+		cidname := fake.Name()
+		cidnum := fake.PhoneNumber()
+		dstnum := fake.CellPhoneNumber()
+		duration := random(30, 300)
+		billsec := duration - 10
+		hangupcause_id := random(1, 30)
+
 		cdr := CDR{CallerIDName: cidname, CallerIDNumber: cidnum,
 			DestinationNumber: dstnum, UUID: uuid4.String(),
 			Duration: duration, Billsec: billsec,
-			StartStamp: time.Now(), AnswerStamp: time.Now(), EndStamp: time.Now()}
+			StartStamp: time.Now(), AnswerStamp: time.Now(), EndStamp: time.Now(),
+			HangupCauseID: hangupcause_id}
+
 		listcdr = append(listcdr, cdr)
 	}
 
