@@ -8,8 +8,11 @@ import (
 	"github.com/nu7hatch/gouuid"
 	"math/rand"
 	"strconv"
+	"sync"
 	"time"
 )
+
+var once sync.Once
 
 // CDR structure used by Beego ORM
 type CDR struct {
@@ -39,13 +42,6 @@ func (c *CDR) TableName() string {
 // 	orm.RegisterModel(new(CDR))
 // }
 
-func init() {
-	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
-	// TODO: use f.DBFile instead of hardcoded ./sqlitedb/cdr.db
-	orm.RegisterDataBase("default", "sqlite3", "./sqlitedb/cdr.db")
-	orm.RegisterModel(new(CDR))
-}
-
 func random(min, max int) int {
 	rand.Seed(time.Now().Unix())
 	return rand.Intn(max-min) + min
@@ -53,6 +49,14 @@ func random(min, max int) int {
 
 // GenerateCDR creates a certain amount of CDRs to a given SQLite database
 func GenerateCDR(sqliteDBpath string, amount int) error {
+	once.Do(func() {
+		orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
+		// TODO: use f.DBFile instead of hardcoded ./sqlitedb/cdr.db
+		// orm.RegisterDataBase("default", "sqlite3", "./sqlitedb/cdr.db")
+		log.Info("=================>" + sqliteDBpath)
+		orm.RegisterDataBase("default", "sqlite3", sqliteDBpath)
+		orm.RegisterModel(new(CDR))
+	})
 	log.Debug("!!! We will populate " + sqliteDBpath + " with " + strconv.Itoa(amount) + " CDRs !!!")
 	fake, _ := faker.New("en")
 
