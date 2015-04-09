@@ -168,14 +168,30 @@ This won’t work if you do not have root access, then make sure a `.conf.d` run
 
 ### Configure CDR-Pusher with Supervisord
 
-Copy Supervisor conf file for cdr-pusher:
+Create an Supervisor conf file for cdr-pusher:
 
-    cp ./supervisord/cdr-pusher-prog.conf /etc/supervisord.conf.d/
+    vim /etc/supervisord.conf.d/cdr-pusher-prog.conf
 
-The makefile provides a function to copy the supervisor conf file:
+A supervisor configuration could look as follow:
 
-    make install-supervisor-conf
+    [program:cdr-pusher]
+    autostart=true
+    autorestart=true
+    startretries=10
+    startsecs = 5
+    directory = /opt/app/cdr-pusher/bin
+    command = /opt/app/cdr-pusher/bin/cdr-pusher
+    user = root
+    redirect_stderr = true
+    stdout_logfile = /var/log/cdr-pusher/cdr-pusher.log
+    stdout_logfile_maxbytes=50MB
+    stdout_logfile_backups=10
 
+
+Make sure the director to store the logs is created, in this case you should
+create '/var/log/cdr-pusher':
+
+    mkdir /var/log/cdr-pusher
 
 ### Supervisord Manage
 

@@ -19,9 +19,6 @@ servedoc:
 configfile:
 	cp cdr-pusher.yaml /etc/cdr-pusher.yaml
 
-install-supervisor-conf:
-	cp install/supervisord/cdr-pusher-prog.conf /etc/supervisor/conf.d/
-
 logdir:
 	@mkdir /var/log/cdr-pusher
 
