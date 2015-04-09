@@ -52,7 +52,7 @@ cdr_fields:
     - orig_field: destination_number
       dest_field: destination_number
       type_field: string
-    - orig_field: hangup_cause_id
+    - orig_field: hangup_cause_q850
       dest_field: hangup_cause_id
       type_field: int
     - orig_field: duration

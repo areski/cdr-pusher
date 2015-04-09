@@ -27,7 +27,7 @@ type CDR struct {
 	EndStamp          time.Time `orm:"auto_now;column(end_stamp)"`
 	Billsec           int       `orm:"column(billsec)"`
 	HangupCause       string    `orm:"column(hangup_cause)"`
-	HangupCauseID     int       `orm:"column(hangup_cause_id)"`
+	HangupCauseID     int       `orm:"column(hangup_cause_q850)"`
 	UUID              string    `orm:"column(uuid)"`
 	BlegUUID          string    `orm:"column(bleg_uuid)"`
 	AccountCode       string    `orm:"column(account_code)"`
