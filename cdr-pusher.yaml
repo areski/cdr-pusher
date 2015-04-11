@@ -1,6 +1,6 @@
 
 # storage_dest_type defines where push the CDRs (accepted values: "postgres", "riak" or "both")
-storage_destination: "both"
+storage_destination: "postgres"
 
 # Used when storage_dest_type = postgres
 # datasourcename: connect string to connect to PostgreSQL used by sql.Open
