@@ -23,7 +23,9 @@ storage_source: "sqlite"
 
 # db_file: specify the database path and name
 # db_file: "/usr/local/freeswitch/cdr.db"
-db_file: "/opt/app/cdr-pusher/sqlitedb/cdr.db"
+# for test we need db_file to be set at ./sqlitedb/cdr.db
+db_file: "./sqlitedb/cdr.db"
+# db_file: "/opt/app/cdr-pusher/sqlitedb/cdr.db"
 
 # db_table: the DB table name
 db_table: "cdr"
