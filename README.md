@@ -29,7 +29,7 @@ Install GVM to select which version of Golang you want to install:
 
     $ bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
     $ source /root/.gvm/scripts/gvm
-    $ gvm install go1.4.2
+    $ gvm install go1.4.2 --binary
     $ gvm use go1.4.2 --default
 
 Make sure you are running by default Go version >= 1.4.2, check by typing the following:
