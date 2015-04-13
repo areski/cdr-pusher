@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/astaxie/beego/orm"
 	"github.com/manveru/faker"
@@ -79,8 +80,11 @@ func GenerateCDR(sqliteDBpath string, amount int) error {
 	for i := 0; i < amount; i++ {
 		uuid4, _ := uuid.NewV4()
 		cidname := fake.Name()
-		cidnum := fake.PhoneNumber()
-		dstnum := fake.CellPhoneNumber()
+		// cidnum := fake.PhoneNumber()
+		cidnum := fmt.Sprintf("+%d600%d", random(25, 39), random(100000, 999999))
+		// TODO: create fake.IntPhoneNumber
+		// dstnum := fake.CellPhoneNumber()
+		dstnum := fmt.Sprintf("+%d800%d", random(25, 49), random(100000, 999999))
 		duration := random(30, 300)
 		billsec := duration - 10
 		hangupcause_id := random(1, 30)
