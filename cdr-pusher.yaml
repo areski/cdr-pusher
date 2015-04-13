@@ -63,6 +63,9 @@ cdr_fields:
     - orig_field: billsec
       dest_field: billsec
       type_field: int
+    - orig_field: accountcode
+      dest_field: accountcode
+      type_field: string
     - orig_field: "datetime(start_stamp)"
       dest_field: starting_date
       type_field: date

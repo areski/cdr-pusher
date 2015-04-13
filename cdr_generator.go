@@ -93,7 +93,7 @@ func GenerateCDR(sqliteDBpath string, amount int) error {
 			DestinationNumber: dstnum, UUID: uuid4.String(),
 			Duration: duration, Billsec: billsec,
 			StartStamp: time.Now(), AnswerStamp: time.Now(), EndStamp: time.Now(),
-			HangupCauseID: hangupcause_id}
+			HangupCauseID: hangupcause_id, AccountCode: "1"}
 
 		listcdr = append(listcdr, cdr)
 	}
