@@ -17,7 +17,7 @@ servedoc:
 	godoc -http=:6060
 
 configfile:
-	cp cdr-pusher.yaml /etc/cdr-pusher.yaml
+	cp -i cdr-pusher.yaml /etc/cdr-pusher.yaml
 
 logdir:
 	@mkdir /var/log/cdr-pusher
