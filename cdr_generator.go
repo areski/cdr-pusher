@@ -87,7 +87,7 @@ func GenerateCDR(sqliteDBpath string, amount int) error {
 		dstnum := fmt.Sprintf("+%d800%d", random(25, 49), random(100000, 999999))
 		duration := random(30, 300)
 		billsec := duration - 10
-		hangupcause_id := random(1, 30)
+		hangupcause_id := random(15, 20)
 
 		cdr := CDR{CallerIDName: cidname, CallerIDNumber: cidnum,
 			DestinationNumber: dstnum, UUID: uuid4.String(),
