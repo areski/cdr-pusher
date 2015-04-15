@@ -1,11 +1,22 @@
 package main
 
+// # TODO
+// ------
+// Using an ORM would have a huge advantage for the database fetcher as
+// we will be able to use the same code over several DBMS.
+// https://github.com/go-gorp/gorp
+// gorp and other ORM are great but we need the ability to define our structure based
+// on the configuration file.
+// gorp support MySQL, PostgreSQL, sqlite3, Oracle & SQL Server
+
 import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	// "github.com/coopernurse/gorp"
+	"errors"
 	log "github.com/Sirupsen/logrus"
 	"text/template"
 )
@@ -15,16 +26,19 @@ import (
 // SQLFetcher structure keeps tracks DB file, table, results and further data
 // needed to fetch.
 type SQLFetcher struct {
-	db           *sql.DB
-	DBFile       string
-	DBTable      string
-	DBFlagField  string
-	maxPushBatch int
-	numFetched   int
-	cdrFields    []ParseFields
-	results      map[int][]string
-	sqlQuery     string
-	listIDs      string
+	db            *sql.DB
+	DBFile        string
+	DNS           string
+	DBType        string
+	DBTable       string
+	DBFlagField   string
+	MaxFetchBatch int
+	numFetched    int
+	cdrFields     []ParseFields
+	results       map[int][]string
+	sqlQuery      string
+	listIDs       string
+	IDField       string
 }
 
 // FetchSQL is used to build the SQL query to fetch on the Database source
@@ -43,47 +57,65 @@ type UpdateCDR struct {
 	Fieldname string
 	Status    int
 	CDRids    string
+	IDField   string
 }
 
 // Init is a constructor for SQLFetcher
-// It will help setting DBFile, DBTable, maxPushBatch and cdrFields
-func (f *SQLFetcher) Init(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields,
-	DBFlagField string) {
+// It will help setting DBFile, DBTable, MaxFetchBatch and cdrFields
+func (f *SQLFetcher) Init(DBFile string, DBTable string, MaxFetchBatch int, cdrFields []ParseFields,
+	DBFlagField string, DBType string, DNS string) {
 	f.db = nil
 	f.DBFile = DBFile
 	f.DBTable = DBTable
-	f.maxPushBatch = maxPushBatch
+	f.DBType = DBType
+	f.DNS = DNS
+	f.MaxFetchBatch = MaxFetchBatch
 	f.numFetched = 0
 	f.cdrFields = cdrFields
 	f.results = nil
 	f.sqlQuery = ""
 	f.DBFlagField = DBFlagField
+	f.IDField = "id"
 }
 
-// func NewSQLFetcher(DBFile string, DBTable string, maxPushBatch int, cdrFields []ParseFields) *SQLFetcher {
+// func NewSQLFetcher(DBFile string, DBTable string, MaxFetchBatch int, cdrFields []ParseFields) *SQLFetcher {
 // 	db, _ := sql.Open("sqlite3", "./sqlitedb/cdr.db")
-// 	return &SQLFetcher{db: db, DBFile: DBFile, DBTable: DBTable, sqlQuery: "", maxPushBatch, 0, cdrFields, nil}
+// 	return &SQLFetcher{db: db, DBFile: DBFile, DBTable: DBTable, sqlQuery: "", MaxFetchBatch, 0, cdrFields, nil}
 // }
 
 // Connect will help to connect to the DBMS, here we implemented the connection to SQLite
 func (f *SQLFetcher) Connect() error {
 	var err error
-	f.db, err = sql.Open("sqlite3", f.DBFile)
-	if err != nil {
-		log.Error("Failed to connect", err)
-		return err
+	if f.DBType == "sqlite3" {
+		f.IDField = "rowid"
+		f.db, err = sql.Open("sqlite3", f.DBFile)
+		if err != nil {
+			log.Error("Failed to connect", err)
+			return err
+		}
+	} else if f.DBType == "mysql" {
+		f.db, err = sql.Open("mysql", f.DNS)
+		if err != nil {
+			log.Error("Failed to connect", err)
+			return err
+		}
+		println("working on mysql support")
+	} else {
+		log.Error("DBType not supported!")
+		return errors.New("DBType not supported!")
 	}
+
 	return nil
 }
 
 // PrepareQuery method will build the fetching SQL query
 func (f *SQLFetcher) PrepareQuery() error {
-	strFields := getFieldSelect(f.cdrFields)
+	strFields := getFieldSelect(f.IDField, f.cdrFields)
 	// parse the string cdrFields
 	const tsql = "SELECT {{.ListFields}} FROM {{.Table}} {{.Clause}} {{.Order}} {{.Limit}}"
 	var strSQL bytes.Buffer
 
-	slimit := fmt.Sprintf("LIMIT %d", f.maxPushBatch)
+	slimit := fmt.Sprintf("LIMIT %d", f.MaxFetchBatch)
 	clause := "WHERE " + f.DBFlagField + "<>1"
 	sqlb := FetchSQL{ListFields: strFields, Table: "cdr", Limit: slimit, Clause: clause}
 	t := template.Must(template.New("sql").Parse(tsql))
@@ -162,10 +194,10 @@ func (f *SQLFetcher) ScanResult() error {
 
 // UpdateCdrTable method is used to mark the record that has been imported
 func (f *SQLFetcher) UpdateCdrTable(status int) error {
-	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE rowid IN ({{.CDRids}})"
+	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE {{.IDField}} IN ({{.CDRids}})"
 	var strSQL bytes.Buffer
 
-	sqlb := UpdateCDR{Table: f.DBTable, Fieldname: f.DBFlagField, Status: status, CDRids: f.listIDs}
+	sqlb := UpdateCDR{Table: f.DBTable, Fieldname: f.DBFlagField, Status: status, IDField: f.IDField, CDRids: f.listIDs}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&strSQL, sqlb)

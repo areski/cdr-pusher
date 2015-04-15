@@ -44,9 +44,9 @@ func externalIP() (string, error) {
 	return "", errors.New("are you connected to the network?")
 }
 
-func getFieldSelect(cdrFields []ParseFields) string {
-	// sqlite init to rowid - move this to conf based on fetcher backend
-	strFields := "rowid"
+func getFieldSelect(IDField string, cdrFields []ParseFields) string {
+	// init strField with id field, in SQLite the ID is rowid
+	strFields := IDField
 	for _, l := range cdrFields {
 		if strFields != "" {
 			strFields = strFields + ", "

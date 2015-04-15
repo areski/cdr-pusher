@@ -28,8 +28,9 @@ const WAITTIME = 60
 // RunFetcher fetchs non imported CDRs from the local datasource (SQLite)
 func RunFetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	f := new(SQLFetcher)
-	if config.StorageSource == "sqlite" {
-		f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields, config.DBFlagField)
+	if config.StorageSource == "sqlite3" || config.StorageSource == "mysql" {
+		f.Init(config.DBFile, config.DBTable, config.MaxFetchBatch, config.CDRFields, config.DBFlagField,
+			config.StorageSource, config.DBDNS)
 		for {
 			log.Info("RunFetcher waiting on chanSync before fetching")
 			<-chanSync
@@ -50,7 +51,7 @@ func RunFetcher(config Config, chanRes chan map[int][]string, chanSync chan bool
 
 // DispatchPush is a dispacher to push the results to the right storage
 func DispatchPush(config Config, results map[int][]string) {
-	if config.StorageDestination == "postgres" || config.StorageDestination == "both" {
+	if config.StorageDestination == "postgres" {
 		// Push CDRs to PostgreSQL
 		pc := new(PGPusher)
 		pc.Init(config.PGDatasourcename, config.CDRFields, config.SwitchIP, config.CDRSourceType, config.TableDestination)
@@ -58,8 +59,7 @@ func DispatchPush(config Config, results map[int][]string) {
 		if err != nil {
 			log.Error(err.Error())
 		}
-	}
-	if config.StorageDestination == "riak" || config.StorageDestination == "both" {
+	} else if config.StorageDestination == "riak" {
 		// Push CDRs to Riak
 		rc := new(RiakPusher)
 		rc.Init(config.RiakConnect, config.CDRFields, config.SwitchIP, config.CDRSourceType, config.RiakBucket)
@@ -168,8 +168,8 @@ func main() {
 
 	// Only log the warning severity or above.
 	// log.SetLevel(log.WarnLevel)
-	log.SetLevel(log.InfoLevel)
-	// log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 
 	log.Info("StartTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 	RunApp()

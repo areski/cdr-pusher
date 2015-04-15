@@ -55,8 +55,8 @@ is installed at the following location: /etc/cdr-pusher.yaml
 
 Config file `/etc/cdr-pusher.yaml`:
 
-    # storage_dest_type defines where push the CDRs (accepted values: "postgres", "riak" or "both")
-    storage_destination: "both"
+    # storage_dest_type defines where push the CDRs (accepted values: "postgres" or "riak")
+    storage_destination: "postgres"
 
     # Used when storage_dest_type = postgres
     # datasourcename: connect string to connect to PostgreSQL used by sql.Open
@@ -90,8 +90,8 @@ Config file `/etc/cdr-pusher.yaml`:
     # heartbeat: Frequence of check for new CDRs in seconds
     heartbeat: 1
 
-    # max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
-    max_push_batch: 1000
+    # max_fetch_batch: Max amoun to CDR to push in batch (value: 1-1000)
+    max_fetch_batch: 1000
 
     # cdr_fields is list of fields that will be fetched (from SQLite3) and pushed (to PostgreSQL)
     # - if dest_field is callid, it will be used in riak as key to insert

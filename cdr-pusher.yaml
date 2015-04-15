@@ -1,41 +1,9 @@
 
-# SETTINGS FOR PUSHING
-# --------------------
-
-# storage_dest_type defines where push the CDRs (accepted values: "postgres", "riak" or "both")
-storage_destination: "postgres"
-
-# Used when storage_dest_type = postgres
-# datasourcename: connect string to connect to PostgreSQL used by sql.Open
-pg_datasourcename: "user=postgres password=password host=localhost port=5432 dbname=cdr-pusher sslmode=disable"
-
-# Used when storage_dest_type = postgres
-# pg_store_table: the DB table name to store CDRs in Postgres
-table_destination: "cdr_import"
-
-# Used when storage_dest_type = riak
-# riak_connect: connect string to connect to Riak used by riak.ConnectClient
-riak_connect: "127.0.0.1:8087"
-
-# Used when storage_dest_type = postgres
-# riak_bucket: the bucket name to store CDRs in Riak
-riak_bucket: "cdr_import"
-
-# max_push_batch: Max amoun to CDR to push in batch (value: 1-1000)
-max_push_batch: 1000
-
-# switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
-switch_ip: ""
-
-# cdr_source_type: write the id of the cdr sources type
-# (accepted value: unknown: 0, freeswitch: 1, asterisk: 2, yate: 3, kamailio: 4, opensips: 5)
-cdr_source_type: 1
-
-# SETTINGS FOR FETCHING
-# ---------------------
+# CDR FETCHING - SOURCES
+# ----------------------
 
 # storage_source_type: type to CDRs to push
-storage_source: "sqlite"
+storage_source: "sqlite3"
 
 # db_file: specify the database path and name
 # db_file: "/usr/local/freeswitch/cdr.db"
@@ -43,11 +11,18 @@ storage_source: "sqlite"
 db_file: "./sqlitedb/cdr.db"
 # db_file: "/opt/app/cdr-pusher/sqlitedb/cdr.db"
 
+# Database DNS
+# Use this with Mysql
+db_dns: ""
+
 # db_table: the DB table name
 db_table: "cdr"
 
 # db_flag_field defines the table field that will be added/used to track the import
 db_flag_field: "flag_imported"
+
+# max_fetch_batch: Max amoun to CDR to push in batch (value: 1-1000)
+max_fetch_batch: 100
 
 # heartbeat: Frequence of check for new CDRs in seconds
 heartbeat: 1
@@ -89,6 +64,36 @@ cdr_fields:
     - orig_field: "datetime(end_stamp)"
       dest_field: extradata
       type_field: jsonb
+
+
+# CDR PUSHING - DESTINATION
+# -------------------------
+
+# storage_dest_type defines where push the CDRs (accepted values: "postgres" or "riak")
+storage_destination: "postgres"
+
+# Used when storage_dest_type = postgres
+# datasourcename: connect string to connect to PostgreSQL used by sql.Open
+pg_datasourcename: "user=postgres password=password host=localhost port=5432 dbname=cdr-pusher sslmode=disable"
+
+# Used when storage_dest_type = postgres
+# pg_store_table: the DB table name to store CDRs in Postgres
+table_destination: "cdr_import"
+
+# Used when storage_dest_type = riak
+# riak_connect: connect string to connect to Riak used by riak.ConnectClient
+riak_connect: "127.0.0.1:8087"
+
+# Used when storage_dest_type = postgres
+# riak_bucket: the bucket name to store CDRs in Riak
+riak_bucket: "cdr_import"
+
+# switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
+switch_ip: ""
+
+# cdr_source_type: write the id of the cdr sources type
+# (accepted value: unknown: 0, freeswitch: 1, asterisk: 2, yate: 3, kamailio: 4, opensips: 5, sipwise: 6)
+cdr_source_type: 1
 
 
 # SETTINGS FOR FAKE GENERATOR

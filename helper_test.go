@@ -9,7 +9,8 @@ func TestGetFieldSelect(t *testing.T) {
 		{OrigField: "uuid", DestField: "callid", TypeField: "string"},
 		{OrigField: "caller_id_name", DestField: "caller_id_name", TypeField: "string"},
 	}
-	strfields := getFieldSelect(cdrFields)
+	IDField := "rowid"
+	strfields := getFieldSelect(IDField, cdrFields)
 	if strfields != "rowid, uuid, caller_id_name" {
 		t.Error("Expected 'rowid, uuid, caller_id_name', got ", strfields)
 	}

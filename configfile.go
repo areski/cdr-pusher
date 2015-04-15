@@ -37,12 +37,13 @@ type Config struct {
 	DBTable            string        "db_table"
 	DBFlagField        string        "db_flag_field"
 	Heartbeat          int           "heartbeat"
-	MaxPushBatch       int           "max_push_batch"
+	MaxFetchBatch      int           "max_fetch_batch"
 	CDRFields          []ParseFields "cdr_fields"
 	SwitchIP           string        "switch_ip"
 	CDRSourceType      int           "cdr_source_type"
 	FakeCDR            string        "fake_cdr"
 	FakeAmountCDR      int           "fake_amount_cdr"
+	DBDNS              string        "db_dns"
 }
 
 var config = Config{}
@@ -62,8 +63,7 @@ func LoadConfig(configfile string) error {
 	if err != nil {
 		panic(err)
 	}
-	if len(config.StorageDestination) == 0 || len(config.StorageSource) == 0 ||
-		len(config.DBFile) == 0 || len(config.DBTable) == 0 {
+	if len(config.StorageDestination) == 0 || len(config.StorageSource) == 0 || len(config.DBTable) == 0 {
 		panic("Settings not properly configured!")
 	}
 	prettyfmt := fmt.Sprintf("Loaded Config:\n%# v", pretty.Formatter(config))
@@ -75,7 +75,11 @@ func LoadConfig(configfile string) error {
 // have a StorageSource defined and StorageDestination set correctly
 func ValidateConfig(config Config) error {
 	switch config.StorageSource {
-	case "sqlite":
+	case "postgres":
+		// could check more settings
+	case "sqlite3":
+		// could check more settings
+	case "mysql":
 		// could check more settings
 	default:
 		return errors.New("not a valid conf setting 'storage_source'")
@@ -83,9 +87,11 @@ func ValidateConfig(config Config) error {
 	switch config.StorageDestination {
 	case "postgres":
 		// could check more settings
-	case "riak":
+	case "sqlite3":
 		// could check more settings
-	case "both":
+	case "mysql":
+		// could check more settings
+	case "riak":
 		// could check more settings
 	default:
 		return errors.New("not a valid conf setting 'storage_destination'")

@@ -7,7 +7,9 @@ import (
 func TestFetch(t *testing.T) {
 	LoadConfig(defaultConf)
 	f := new(SQLFetcher)
-	f.Init(config.DBFile, config.DBTable, config.MaxPushBatch, config.CDRFields, config.DBFlagField)
+	DNS := ""
+	f.Init(config.DBFile, config.DBTable, config.MaxFetchBatch, config.CDRFields, config.DBFlagField,
+		config.StorageSource, DNS)
 	err := f.Fetch()
 	if err != nil {
 		t.Error("Not expected error, got ", err.Error())
