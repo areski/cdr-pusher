@@ -55,31 +55,21 @@ is installed at the following location: /etc/cdr-pusher.yaml
 
 Config file `/etc/cdr-pusher.yaml`:
 
-    # storage_dest_type defines where push the CDRs (accepted values: "postgres" or "riak")
-    storage_destination: "postgres"
-
-    # Used when storage_dest_type = postgres
-    # datasourcename: connect string to connect to PostgreSQL used by sql.Open
-    pg_datasourcename: "user=postgres password=password host=localhost port=5433 dbname=cdr-pusher sslmode=disable"
-
-    # Used when storage_dest_type = postgres
-    # pg_store_table: the DB table name to store CDRs in Postgres
-    table_destination: "cdr_import"
-
-    # Used when storage_dest_type = riak
-    # riak_connect: connect string to connect to Riak used by riak.ConnectClient
-    riak_connect: "127.0.0.1:8087"
-
-    # Used when storage_dest_type = postgres
-    # riak_bucket: the bucket name to store CDRs in Riak
-    riak_bucket: "cdr_import"
+    # CDR FETCHING - SOURCES
+    # ----------------------
 
     # storage_source_type: type to CDRs to push
-    storage_source: "sqlite"
+    storage_source: "sqlite3"
 
     # db_file: specify the database path and name
     # db_file: "/usr/local/freeswitch/cdr.db"
+    # for test we need db_file to be set at ./sqlitedb/cdr.db
     db_file: "./sqlitedb/cdr.db"
+    # db_file: "/opt/app/cdr-pusher/sqlitedb/cdr.db"
+
+    # Database DNS
+    # Use this with Mysql
+    db_dns: ""
 
     # db_table: the DB table name
     db_table: "cdr"
@@ -87,11 +77,11 @@ Config file `/etc/cdr-pusher.yaml`:
     # db_flag_field defines the table field that will be added/used to track the import
     db_flag_field: "flag_imported"
 
+    # max_fetch_batch: Max amoun to CDR to push in batch (value: 1-1000)
+    max_fetch_batch: 100
+
     # heartbeat: Frequence of check for new CDRs in seconds
     heartbeat: 1
-
-    # max_fetch_batch: Max amoun to CDR to push in batch (value: 1-1000)
-    max_fetch_batch: 1000
 
     # cdr_fields is list of fields that will be fetched (from SQLite3) and pushed (to PostgreSQL)
     # - if dest_field is callid, it will be used in riak as key to insert
@@ -108,15 +98,22 @@ Config file `/etc/cdr-pusher.yaml`:
         - orig_field: destination_number
           dest_field: destination_number
           type_field: string
+        - orig_field: hangup_cause_q850
+          dest_field: hangup_cause_id
+          type_field: int
         - orig_field: duration
           dest_field: duration
           type_field: int
         - orig_field: billsec
           dest_field: billsec
           type_field: int
+        # - orig_field: account_code
+        #   dest_field: accountcode
+        #   type_field: string
         - orig_field: "datetime(start_stamp)"
           dest_field: starting_date
           type_field: date
+        # - orig_field: "strftime('%s', answer_stamp)" # convert to epoch
         - orig_field: "datetime(answer_stamp)"
           dest_field: extradata
           type_field: jsonb
@@ -124,12 +121,39 @@ Config file `/etc/cdr-pusher.yaml`:
           dest_field: extradata
           type_field: jsonb
 
+
+    # CDR PUSHING - DESTINATION
+    # -------------------------
+
+    # storage_dest_type defines where push the CDRs (accepted values: "postgres" or "riak")
+    storage_destination: "postgres"
+
+    # Used when storage_dest_type = postgres
+    # datasourcename: connect string to connect to PostgreSQL used by sql.Open
+    pg_datasourcename: "user=postgres password=password host=localhost port=5432 dbname=cdr-pusher sslmode=disable"
+
+    # Used when storage_dest_type = postgres
+    # pg_store_table: the DB table name to store CDRs in Postgres
+    table_destination: "cdr_import"
+
+    # Used when storage_dest_type = riak
+    # riak_connect: connect string to connect to Riak used by riak.ConnectClient
+    riak_connect: "127.0.0.1:8087"
+
+    # Used when storage_dest_type = postgres
+    # riak_bucket: the bucket name to store CDRs in Riak
+    riak_bucket: "cdr_import"
+
     # switch_ip: leave this empty to default to your external IP (accepted value: ""|"your IP")
     switch_ip: ""
 
     # cdr_source_type: write the id of the cdr sources type
-    # (accepted value: unknown: 0, freeswitch: 1, asterisk: 2, yate: 3, kamailio: 4, opensips: 5)
+    # (accepted value: unknown: 0, freeswitch: 1, asterisk: 2, yate: 3, kamailio: 4, opensips: 5, sipwise: 6)
     cdr_source_type: 1
+
+
+    # SETTINGS FOR FAKE GENERATOR
+    # ---------------------------
 
     # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
     fake_cdr: "no"
@@ -137,6 +161,7 @@ Config file `/etc/cdr-pusher.yaml`:
     # fake_amount_cdr is the amount of CDRs to generate into the SQLite database for test purpose (value: 1-1000)
     # this amount of CDRs will be created every second
     fake_amount_cdr: 1000
+
 
 
 ## Deployment

@@ -99,7 +99,6 @@ func (f *SQLFetcher) Connect() error {
 			log.Error("Failed to connect", err)
 			return err
 		}
-		println("working on mysql support")
 	} else {
 		log.Error("DBType not supported!")
 		return errors.New("DBType not supported!")
