@@ -168,8 +168,8 @@ func main() {
 
 	// Only log the warning severity or above.
 	// log.SetLevel(log.WarnLevel)
-	// log.SetLevel(log.InfoLevel)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
+	// log.SetLevel(log.DebugLevel)
 
 	log.Info("StartTime: " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 	RunApp()
