@@ -1,6 +1,6 @@
 
-# CDR FETCHING - SOURCES
-# ----------------------
+# CDR FETCHING - SOURCE
+# ---------------------
 
 # storage_source_type: type to CDRs to push
 storage_source: "sqlite3"
@@ -92,8 +92,8 @@ riak_bucket: "cdr_import"
 switch_ip: ""
 
 # cdr_source_type: write the id of the cdr sources type
-# (accepted value: unknown: 0, freeswitch: 1, asterisk: 2, yate: 3, kamailio: 4, opensips: 5, sipwise: 6)
-cdr_source_type: 1
+# (accepted value: unknown: 0, csv: 1, api: 2, freeswitch: 3, asterisk: 4, yate: 5, kamailio: 6, opensips: 7, sipwise: 8, veraz: 9)
+cdr_source_type: 0
 
 
 # SETTINGS FOR FAKE GENERATOR
