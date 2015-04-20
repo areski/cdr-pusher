@@ -161,37 +161,6 @@ func (p *PGPusher) buildInsertQuery() error {
 	return nil
 }
 
-// buildInsertQuery method will build the Insert SQL query
-func (p *PGPusher) buildInsertQuery2() error {
-	strFieldlist, _ := getFieldlistInsert(p.cdrFields)
-	strValuelist := getValuelistInsert(p.cdrFields)
-
-	const tsql = "INSERT INTO {{.Table}} ({{.ListFields}}) VALUES "
-	var strSQL bytes.Buffer
-
-	sqlb := PushSQL{Table: p.tableDestination, ListFields: strFieldlist, Values: strValuelist}
-	t := template.Must(template.New("sql").Parse(tsql))
-
-	err := t.Execute(&strSQL, sqlb)
-	if err != nil {
-		return err
-	}
-	p.sqlQuery = strSQL.String()
-
-	// Values
-	var strSQLValue bytes.Buffer
-	const sqlvalues = "({{.Values}})"
-	t = template.Must(template.New("sql").Parse(sqlvalues))
-
-	err = t.Execute(&strSQLValue, sqlb)
-	if err != nil {
-		return err
-	}
-	p.sqlQueryValue = strSQLValue.String()
-
-	return nil
-}
-
 // DBClose is helping defering the closing of the DB connector
 func (p *PGPusher) DBClose() error {
 	defer p.db.Close()
@@ -328,11 +297,6 @@ func (p *PGPusher) Push(fetchedResults map[int][]string) error {
 	if err != nil {
 		return err
 	}
-	// // Prepare SQL query
-	// err = p.buildInsertQuery2()
-	// if err != nil {
-	// 	return err
-	// }
 	// Insert in Batch to DB
 	err = p.BatchInsert(fetchedResults)
 	if err != nil {
