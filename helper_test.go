@@ -22,8 +22,8 @@ func TestGetFieldlistInsert(t *testing.T) {
 		{OrigField: "caller_id_name", DestField: "caller_id_name", TypeField: "string"},
 	}
 	insertf, _ := getFieldlistInsert(cdrFields)
-	if insertf != "switch, callid, caller_id_name" {
-		t.Error("Expected 'switch, callid, caller_id_name', got ", insertf)
+	if insertf != "switch, cdr_source_type, callid, caller_id_name" {
+		t.Error("Expected 'switch, cdr_source_type, callid, caller_id_name', got ", insertf)
 	}
 
 	cdrFields = []ParseFields{
@@ -32,8 +32,8 @@ func TestGetFieldlistInsert(t *testing.T) {
 	}
 
 	insertExtra, extradata := getFieldlistInsert(cdrFields)
-	if insertExtra != "switch, callid, extradata" {
-		t.Error("Expected 'switch, callid, extradata', got ", insertExtra)
+	if insertExtra != "switch, cdr_source_type, callid, extradata" {
+		t.Error("Expected 'switch, cdr_source_type, callid, extradata', got ", insertExtra)
 	}
 	expectedmap := map[int]string{1: "customfield"}
 	if extradata[1] != expectedmap[1] {
@@ -47,8 +47,8 @@ func TestGetValuelistInsert(t *testing.T) {
 		{OrigField: "caller_id_name", DestField: "caller_id_name", TypeField: "string"},
 	}
 	valuesf := getValuelistInsert(cdrFields)
-	if valuesf != ":switch, :callid, :caller_id_name" {
-		t.Error("Expected ':switch, :callid, :caller_id_name', got ", valuesf)
+	if valuesf != ":switch, :cdr_source_type, :callid, :caller_id_name" {
+		t.Error("Expected ':switch, :cdr_source_type, :callid, :caller_id_name', got ", valuesf)
 	}
 }
 
