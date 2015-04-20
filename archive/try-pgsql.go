@@ -57,9 +57,9 @@ func main() {
 
 	// Batch Insert
 	data := []map[string]string{
-		{"field1": "1", "field2": "1"},
-		{"field1": "2", "field2": "2"},
-		{"field1": "3", "field2": "3"},
+		{"field1": "1", "field2": "You"},
+		{"field1": "2", "field2": "We"},
+		{"field1": "3", "field2": "Them"},
 	}
 
 	for _, v := range data {
@@ -68,7 +68,6 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-
 	}
 
 	// # Select from table

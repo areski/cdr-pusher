@@ -26,11 +26,15 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
+	// "database/sql"
 	"encoding/json"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"reflect"
+	// "strconv"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -79,6 +83,7 @@ type PGPusher struct {
 	cdrSourceType    int
 	countPushed      int
 	sqlQuery         string
+	sqlQueryValue    string
 }
 
 // PushSQL will help creating the SQL Insert query to push CDRs
@@ -156,6 +161,37 @@ func (p *PGPusher) buildInsertQuery() error {
 	return nil
 }
 
+// buildInsertQuery method will build the Insert SQL query
+func (p *PGPusher) buildInsertQuery2() error {
+	strFieldlist, _ := getFieldlistInsert(p.cdrFields)
+	strValuelist := getValuelistInsert(p.cdrFields)
+
+	const tsql = "INSERT INTO {{.Table}} ({{.ListFields}}) VALUES "
+	var strSQL bytes.Buffer
+
+	sqlb := PushSQL{Table: p.tableDestination, ListFields: strFieldlist, Values: strValuelist}
+	t := template.Must(template.New("sql").Parse(tsql))
+
+	err := t.Execute(&strSQL, sqlb)
+	if err != nil {
+		return err
+	}
+	p.sqlQuery = strSQL.String()
+
+	// Values
+	var strSQLValue bytes.Buffer
+	const sqlvalues = "({{.Values}})"
+	t = template.Must(template.New("sql").Parse(sqlvalues))
+
+	err = t.Execute(&strSQLValue, sqlb)
+	if err != nil {
+		return err
+	}
+	p.sqlQueryValue = strSQLValue.String()
+
+	return nil
+}
+
 // DBClose is helping defering the closing of the DB connector
 func (p *PGPusher) DBClose() error {
 	defer p.db.Close()
@@ -198,8 +234,10 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 		"fetchedResults": fetchedResults,
 	}).Debug("Results:")
 	log.WithFields(log.Fields{
+		// "p.sqlQueryValue": p.sqlQueryValue,
 		"p.sqlQuery": p.sqlQuery,
 	}).Debug("Query:")
+
 	var err error
 	// tx, err := p.db.Begin()
 	tx := p.db.MustBegin()
@@ -211,23 +249,42 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 	if err != nil {
 		return err
 	}
-	var res sql.Result
+	// var res sql.Result
+	// var resstr string
+	// var intf []interface{}
 	p.countPushed = 0
+	queryb := ""
 	for _, vmap := range data {
 		// Named queries, using `:name` as the bindvar.  Automatic bindvar support
 		// which takes into account the dbtype based on the driverName on sqlx.Open/Connect
-		res, err = tx.NamedExec(p.sqlQuery, vmap)
-		if err != nil {
-			log.Error("Exec err:", err.Error())
-			continue
+		// res, err = tx.NamedExec(p.sqlQuery, vmap)
+		// resstr, intf, _ := tx.BindNamed(p.sqlQuery, vmap)
+		_, intf, _ := tx.BindNamed(p.sqlQuery, vmap)
+		sqlQueryInsert := p.sqlQuery[0 : strings.Index(p.sqlQuery, "VALUES (")+7]
+		listvalue := ""
+		for _, k := range intf {
+			if listvalue != "" {
+				listvalue = listvalue + ", "
+			}
+			valof := reflect.ValueOf(k)
+			if valof.Kind() == reflect.Int {
+				aString := fmt.Sprintf("%d", k)
+				listvalue = listvalue + aString
+			} else {
+				aString := fmt.Sprintf("%s", k)
+				listvalue = listvalue + "'" + aString + "'"
+			}
 		}
-		num, err := res.RowsAffected()
-		if err != nil {
-			log.Debug("RowsAffected:", num)
+		if queryb == "" {
+			queryb = queryb + fmt.Sprintf("%s (%s)", sqlQueryInsert, listvalue)
+		} else {
+			queryb = queryb + fmt.Sprintf(", (%s)", listvalue)
 		}
 		p.countPushed = p.countPushed + 1
 	}
-
+	log.Debug("Insert SQL:", queryb)
+	tx.MustExec(queryb)
+	log.Debug("countPushed:", p.countPushed)
 	if err = tx.Commit(); err != nil {
 		log.Error("Error:", err.Error())
 		return err
@@ -271,6 +328,11 @@ func (p *PGPusher) Push(fetchedResults map[int][]string) error {
 	if err != nil {
 		return err
 	}
+	// // Prepare SQL query
+	// err = p.buildInsertQuery2()
+	// if err != nil {
+	// 	return err
+	// }
 	// Insert in Batch to DB
 	err = p.BatchInsert(fetchedResults)
 	if err != nil {

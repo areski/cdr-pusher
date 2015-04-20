@@ -61,7 +61,7 @@ func getFieldlistInsert(cdrFields []ParseFields) (string, map[int]string) {
 	// that will be stored in the extra field. ie map[int]string{5: "datetime(answer_stamp)", 6: "datetime(end_stamp)"}
 	var extradata = map[int]string{}
 	extra := false
-	strFields := "switch, "
+	strFields := "switch, cdr_source_type, "
 	for i, l := range cdrFields {
 		if l.DestField == "extradata" {
 			extradata[i] = l.OrigField
@@ -85,7 +85,7 @@ func getFieldlistInsert(cdrFields []ParseFields) (string, map[int]string) {
 // VALUES (:switch, :caller_id_name, :caller_id_number, :destination_number, :duration, :extradata)
 func getValuelistInsert(cdrFields []ParseFields) string {
 	listField := make(map[string]int)
-	values := ":switch, "
+	values := ":switch, :cdr_source_type, "
 	for _, l := range cdrFields {
 		if listField[l.DestField] == 0 {
 			listField[l.DestField] = 1
