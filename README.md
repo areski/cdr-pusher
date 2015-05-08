@@ -1,16 +1,16 @@
 # CDR-Pusher
 
 CDR-Pusher is a Go Application that will push your CDRs (Call Detail Record)
-from your local storage (See list of supported storage) to a centralized
+from local storage (See list of supported storage) to a centralized
 PostgreSQL Database or to a Riak Cluster.
 
-This can be used to centralize your CDRs or simply to safely backup them.
+This can be used to centralize your CDRs or simply to safely back them up.
 
-Unifying your CDRs make it easy for call Analysts to do their job. Software
+Unifying your CDRs makes it easy for call Analysts to do their job. Software
 like CDR-Stats (http://www.cdr-stats.org/) can efficiently provide Call &
 Billing reporting independently of the type of switches you have in your
-infrastructure, so you can centralized CDRs coming from different
-communications platform such as Asterisk, FreeSWITCH, Kamailio & others.
+infrastructure, so you can do aggregation and mediation on CDRs coming from a
+variety of communications platform such as Asterisk, FreeSWITCH, Kamailio & others.
 
 [![circleci](https://circleci.com/gh/areski/cdr-pusher.png)](https://circleci.com/gh/areski/cdr-pusher)
 
@@ -48,7 +48,7 @@ To install and run the cdr-pusher application, follow those steps:
     $ ./bin/cdr-pusher
 
 The config file [cdr-pusher.yaml](https://raw.githubusercontent.com/areski/cdr-pusher/master/cdr-pusher.yaml)
-is installed at the following location: /etc/cdr-pusher.yaml
+and is installed at the following location: /etc/cdr-pusher.yaml
 
 
 ## Configuration file
@@ -153,11 +153,11 @@ Config file `/etc/cdr-pusher.yaml`:
     # SETTINGS FOR FAKE GENERATOR
     # ---------------------------
 
-    # fake_cdr will populate the SQLite database with fake CDRs for test purpose (accepted value: "yes|no")
+    # fake_cdr will populate the SQLite database with fake CDRs for testing (accepted value: "yes|no")
     fake_cdr: "no"
 
-    # fake_amount_cdr is the amount of CDRs to generate into the SQLite database for test purpose (value: 1-1000)
-    # this amount of CDRs will be created every second
+    # fake_amount_cdr is the number of CDRs to generate into the SQLite database for testing purposes (value: 1-1000)
+    # this number of CDRs will be created every second
     fake_amount_cdr: 1000
 
 
@@ -179,7 +179,7 @@ Some Linux distributions offer a version of Supervisor that is installable throu
 
 #### Creating a Configuration File
 
-Follow those steps if you don't have config file for supervisord.
+Follow these steps if you don't have config file for supervisord.
 Once you see the file echoed to your terminal, reinvoke the command as:
 
     echo_supervisord_conf > /etc/supervisor/supervisord.conf
@@ -288,14 +288,14 @@ Visit gocover for the test coverage: http://gocover.io/github.com/areski/cdr-pus
 
 CDR-Pusher is licensed under MIT, see `LICENSE` file.
 
-Created with love by Areski Belaid [@areskib](http://twitter.com/areskib).
+Created by Areski Belaid [@areskib](http://twitter.com/areskib).
 
 
 ## Roadmap
 
 Our first focus was to support FreeSWITCH CDRs, that's why we decided to support
 the SQLite backend, it's also the less invasive and one of the easiest to configure.
-SQLite give also the posibility to mark/track the pushed records which is safer
+SQLite also gives the posibility to mark/track the pushed records which is safer
 than importing them from CSV files.
 
 We are planning to implement the following very soon:
