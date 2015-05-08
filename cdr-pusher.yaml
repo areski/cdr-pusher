@@ -2,13 +2,14 @@
 # CDR FETCHING - SOURCE
 # ---------------------
 
-# storage_source_type: type to CDRs to push
+# storage_source_type: DB backend type where CDRs are stored
+# (accepted values: "sqlite3" and "mysql")
 storage_source: "sqlite3"
 
 # db_file: specify the database path and name
-# db_file: "/usr/local/freeswitch/cdr.db"
 # for test we need db_file to be set at ./sqlitedb/cdr.db
 db_file: "./sqlitedb/cdr.db"
+# db_file: "/usr/local/freeswitch/cdr.db"
 # db_file: "/opt/app/cdr-pusher/sqlitedb/cdr.db"
 
 # Database DNS
@@ -24,7 +25,7 @@ db_flag_field: "flag_imported"
 # max_fetch_batch: Max amoun to CDR to push in batch (value: 1-1000)
 max_fetch_batch: 100
 
-# heartbeat: Frequence of check for new CDRs in seconds
+# heartbeat: Frequency of check for new CDRs in seconds
 heartbeat: 1
 
 # cdr_fields is list of fields that will be fetched (from SQLite3) and pushed (to PostgreSQL)
