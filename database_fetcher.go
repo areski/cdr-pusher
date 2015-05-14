@@ -116,7 +116,7 @@ func (f *SQLFetcher) PrepareQuery() error {
 
 	slimit := fmt.Sprintf("LIMIT %d", f.MaxFetchBatch)
 	clause := "WHERE " + f.DBFlagField + "<>1"
-	sqlb := FetchSQL{ListFields: strFields, Table: "cdr", Limit: slimit, Clause: clause}
+	sqlb := FetchSQL{ListFields: strFields, Table: f.DBTable, Limit: slimit, Clause: clause}
 	t := template.Must(template.New("sql").Parse(tsql))
 
 	err := t.Execute(&strSQL, sqlb)
@@ -154,7 +154,7 @@ func (f *SQLFetcher) ScanResult() error {
 	}
 	// Result is your slice string.
 	f.results = make(map[int][]string)
-	listIDs := ""
+	f.listIDs = ""
 	rawResult := make([][]byte, len(cols))
 	result := make([]string, len(cols))
 
@@ -171,7 +171,7 @@ func (f *SQLFetcher) ScanResult() error {
 		}
 		for i, raw := range rawResult {
 			if i == 0 {
-				listIDs = listIDs + string(raw) + ", "
+				f.listIDs = f.listIDs + string(raw) + ", "
 			}
 			if raw == nil {
 				result[i] = "\\N"
@@ -183,10 +183,10 @@ func (f *SQLFetcher) ScanResult() error {
 		k++
 	}
 	f.numFetched = k
-	log.Info("Total fetched from Sqlite: ", f.numFetched)
-	// Remove last ', ' from listIDs
-	if listIDs != "" {
-		f.listIDs = listIDs[0 : len(listIDs)-2]
+	log.Info("Total fetched from database: ", f.numFetched)
+	// Remove last ', ' from f.listIDs
+	if f.listIDs != "" {
+		f.listIDs = f.listIDs[0 : len(f.listIDs)-2]
 	}
 	return nil
 }
@@ -196,16 +196,20 @@ func (f *SQLFetcher) UpdateCdrTable(status int) error {
 	const tsql = "UPDATE {{.Table}} SET {{.Fieldname}}={{.Status}} WHERE {{.IDField}} IN ({{.CDRids}})"
 	var strSQL bytes.Buffer
 
-	sqlb := UpdateCDR{Table: f.DBTable, Fieldname: f.DBFlagField, Status: status, IDField: f.IDField, CDRids: f.listIDs}
-	t := template.Must(template.New("sql").Parse(tsql))
+	if len(f.listIDs) > 0 {
+		sqlb := UpdateCDR{Table: f.DBTable, Fieldname: f.DBFlagField, Status: status, IDField: f.IDField, CDRids: f.listIDs}
+		t := template.Must(template.New("sql").Parse(tsql))
 
-	err := t.Execute(&strSQL, sqlb)
-	log.Debug("UPDATE TABLE: ", &strSQL)
-	if err != nil {
-		return err
-	}
-	if _, err := f.db.Exec(strSQL.String()); err != nil {
-		return err
+		err := t.Execute(&strSQL, sqlb)
+		log.Debug("UPDATE TABLE: ", &strSQL)
+		if err != nil {
+			return err
+		}
+		if _, err := f.db.Exec(strSQL.String()); err != nil {
+			return err
+		}
+	} else {
+		log.Debug("No IDs to update...")
 	}
 	return nil
 }
