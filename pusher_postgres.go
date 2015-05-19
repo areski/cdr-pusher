@@ -241,6 +241,8 @@ func (p *PGPusher) BatchInsert(fetchedResults map[int][]string) error {
 				listvalue = listvalue + aString
 			} else {
 				aString := fmt.Sprintf("%s", k)
+				// aString = strconv.QuoteToASCII(aString)
+				aString = strings.Replace(aString, "'", " ", -1)
 				listvalue = listvalue + "'" + aString + "'"
 			}
 		}

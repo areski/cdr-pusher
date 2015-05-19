@@ -47,6 +47,11 @@ To install and run the cdr-pusher application, follow those steps:
     $ make build
     $ ./bin/cdr-pusher
 
+
+If you have some issues with the build, it's possible that you don't have a
+recent version of Git, we need Git version >= 1.7.4.
+On CentOS 6.X, upgrade Git as follow: http://tecadmin.net/how-to-upgrade-git-version-1-7-10-on-centos-6/
+
 The config file [cdr-pusher.yaml](https://raw.githubusercontent.com/areski/cdr-pusher/master/cdr-pusher.yaml)
 and is installed at the following location: /etc/cdr-pusher.yaml
 
