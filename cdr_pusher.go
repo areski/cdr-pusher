@@ -29,8 +29,7 @@ const WAITTIME = 60
 func RunFetcher(config Config, chanRes chan map[int][]string, chanSync chan bool) {
 	f := new(SQLFetcher)
 	if config.StorageSource == "sqlite3" || config.StorageSource == "mysql" {
-		f.Init(config.DBFile, config.DBTable, config.MaxFetchBatch, config.CDRFields, config.DBFlagField,
-			config.StorageSource, config.DBDNS)
+		f.Init(config.DBFile, config.DBTable, config.MaxFetchBatch, config.CDRFields, config.DBIdField, config.DBFlagField, config.StorageSource, config.DBDNS)
 		for {
 			log.Info("RunFetcher waiting on chanSync before fetching")
 			<-chanSync

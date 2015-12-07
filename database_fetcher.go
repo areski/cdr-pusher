@@ -63,7 +63,7 @@ type UpdateCDR struct {
 // Init is a constructor for SQLFetcher
 // It will help setting DBFile, DBTable, MaxFetchBatch and cdrFields
 func (f *SQLFetcher) Init(DBFile string, DBTable string, MaxFetchBatch int, cdrFields []ParseFields,
-	DBFlagField string, DBType string, DNS string) {
+	DBIdField string, DBFlagField string, DBType string, DNS string) {
 	f.db = nil
 	f.DBFile = DBFile
 	f.DBTable = DBTable
@@ -74,8 +74,12 @@ func (f *SQLFetcher) Init(DBFile string, DBTable string, MaxFetchBatch int, cdrF
 	f.cdrFields = cdrFields
 	f.results = nil
 	f.sqlQuery = ""
+	if DBIdField == "" {
+		f.IDField = "id"
+	} else {
+		f.IDField = DBIdField
+	}
 	f.DBFlagField = DBFlagField
-	f.IDField = "id"
 }
 
 // func NewSQLFetcher(DBFile string, DBTable string, MaxFetchBatch int, cdrFields []ParseFields) *SQLFetcher {

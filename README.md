@@ -77,6 +77,9 @@ Config file `/etc/cdr-pusher.yaml`:
     # db_table: the DB table name
     db_table: "cdr"
 
+    # db_flag_field defines the field that will be used as table id (PK) (not used with Sqlite3)
+    db_id_field: "id"
+
     # db_flag_field defines the table field that will be added/used to track the import
     db_flag_field: "flag_imported"
 
