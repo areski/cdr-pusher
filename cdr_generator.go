@@ -39,7 +39,7 @@ func (c *CDR) TableName() string {
 }
 
 // func connectSqliteDB(sqliteDBpath string) {
-// 	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
+// 	orm.RegisterDriver("sqlite3", orm.DRSqlite)
 // 	orm.RegisterDataBase("default", "sqlite3", sqliteDBpath)
 // 	orm.RegisterModel(new(CDR))
 // }
@@ -52,7 +52,7 @@ func random(min, max int) int {
 // GenerateCDR creates a certain amount of CDRs to a given SQLite database
 func GenerateCDR(sqliteDBpath string, amount int) error {
 	once.Do(func() {
-		orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
+		orm.RegisterDriver("sqlite3", orm.DRSqlite)
 		orm.RegisterDataBase("default", "sqlite3", sqliteDBpath)
 		orm.RegisterModel(new(CDR))
 
