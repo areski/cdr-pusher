@@ -34,7 +34,7 @@ func (c *CDR) TableName() string {
 }
 
 func init() {
-	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
+	orm.RegisterDriver("sqlite3", orm.DRSqlite)
 	orm.RegisterDataBase("default", "sqlite3", "../sqlitedb/cdr.db")
 	orm.RegisterModel(new(CDR))
 }
