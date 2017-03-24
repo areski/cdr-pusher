@@ -18,8 +18,10 @@ db_file: "./sqlitedb/cdr.db"
 # db_file: "/usr/local/freeswitch/cdr.db"
 # db_file: "/opt/app/cdr-pusher/sqlitedb/cdr.db"
 
-# Database DNS
-# Use this with Mysql
+# Use this with Mysql!
+# Database DNS (https://github.com/go-sql-driver/mysql#dsn-data-source-name)
+# [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
+# eg. db_dns: "username:password@tcp(127.0.0.1:3306)/asterisk"
 db_dns: ""
 
 # db_table: the DB table name

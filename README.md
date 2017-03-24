@@ -29,8 +29,8 @@ Install GVM to select which version of Golang you want to install:
 
     $ bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
     $ source /root/.gvm/scripts/gvm
-    $ gvm install go1.4.2 --binary
-    $ gvm use go1.4.2 --default
+    $ gvm install go1.8 --binary
+    $ gvm use go1.8 --default
 
 Make sure you are running by default Go version >= 1.4.2, check by typing the following:
 
@@ -70,8 +70,10 @@ Config file `/etc/cdr-pusher.yaml`:
     # db_file: specify the database path and name
     db_file: "./sqlitedb/cdr.db"
 
-    # Database DNS
-    # Use this with Mysql
+    # Use this with Mysql!
+    # Database DNS (https://github.com/go-sql-driver/mysql#dsn-data-source-name)
+    # [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
+    # eg. db_dns: "username:password@tcp(127.0.0.1:3306)/asterisk"
     db_dns: ""
 
     # db_table: the DB table name
