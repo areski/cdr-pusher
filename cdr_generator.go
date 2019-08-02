@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/astaxie/beego/orm"
 	"github.com/manveru/faker"
 	_ "github.com/mattn/go-sqlite3"

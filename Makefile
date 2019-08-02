@@ -1,7 +1,7 @@
 BINARY = ./bin/cdr-pusher
 
 install-daemon:
-	go install ./...
+	go install .
 
 deps:
 	go get .
@@ -23,7 +23,7 @@ logdir:
 	@mkdir /var/log/cdr-pusher
 
 get:
-	@go get -d ./...
+	@go get -d .
 
 build: get configfile
 	@mkdir -p bin

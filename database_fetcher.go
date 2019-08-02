@@ -17,7 +17,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	// "github.com/coopernurse/gorp"
 	"errors"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"text/template"
 )
 

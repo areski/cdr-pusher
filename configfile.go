@@ -7,7 +7,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/kr/pretty"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
